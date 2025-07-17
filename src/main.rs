@@ -1,3 +1,18 @@
+use std::process::{Command, Stdio};
+
+fn find_adb() -> bool {
+	Command::new("adb")
+		.args(["--version"])
+		.stdout(Stdio::null())
+		.status()
+		.is_ok()
+}
+
 fn main() {
-	println!("Hello, world!");
+	if !find_adb() {
+		println!("ADB nout found.");
+		return;
+	}
+
+	println!("ADB found.");
 }
