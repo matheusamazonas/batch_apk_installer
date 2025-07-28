@@ -1,13 +1,6 @@
 use regex::{self, Regex};
-use std::process::{Command, Stdio};
 
-pub fn find_adb() -> bool {
-	Command::new("adb")
-		.args(["--version"])
-		.stdout(Stdio::null())
-		.status()
-		.is_ok()
-}
+pub mod adb;
 
 pub fn parse_version(input: &str) -> Option<String> {
 	let regex = Regex::new(r"\b\d+(\.\d+\b)+").ok()?;
@@ -36,15 +29,27 @@ mod tests {
 		assert_eq!(parse_version("0.1.0"), Some("0.1.0".to_string()));
 		assert_eq!(parse_version("1.155.1"), Some("1.155.1".to_string()));
 		assert_eq!(parse_version("5.0.999"), Some("5.0.999".to_string()));
-		assert_eq!(parse_version("999.999.999"), Some("999.999.999".to_string()));
+		assert_eq!(
+			parse_version("999.999.999"),
+			Some("999.999.999".to_string())
+		);
 	}
 
 	#[test]
 	fn parse_valid_many_regions() {
 		assert_eq!(parse_version("5.1.1.1"), Some("5.1.1.1".to_string()));
-		assert_eq!(parse_version("0.0.0.0.0.0"), Some("0.0.0.0.0.0".to_string()));
-		assert_eq!(parse_version("155.1.2.3.4.5"), Some("155.1.2.3.4.5".to_string()));
-		assert_eq!(parse_version("1.22.333.4444.55555.666666"), Some("1.22.333.4444.55555.666666".to_string()));
+		assert_eq!(
+			parse_version("0.0.0.0.0.0"),
+			Some("0.0.0.0.0.0".to_string())
+		);
+		assert_eq!(
+			parse_version("155.1.2.3.4.5"),
+			Some("155.1.2.3.4.5".to_string())
+		);
+		assert_eq!(
+			parse_version("1.22.333.4444.55555.666666"),
+			Some("1.22.333.4444.55555.666666".to_string())
+		);
 	}
 
 	#[test]
