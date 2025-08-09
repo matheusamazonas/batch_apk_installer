@@ -2,6 +2,21 @@ use regex::{self, Regex};
 
 pub mod adb;
 
+/// Parses an input string into a version string.
+/// 
+/// # Arguments 
+/// 
+/// * `input`: the input string to be parsed.
+/// 
+/// returns: `Ok` if parsing was successful, `None` if not.
+/// 
+/// # Examples 
+/// 
+/// ```
+/// assert_eq!(adb_installer::parse_version("5.1"), Some("5.1".to_string()));
+/// assert_eq!(adb_installer::parse_version("5.1.0"), Some("5.1.0".to_string()));
+/// assert_eq!(adb_installer::parse_version("5.1.1.1"), Some("5.1.1.1".to_string()));
+/// ```
 pub fn parse_version(input: &str) -> Option<String> {
 	let regex = Regex::new(r"\b\d+(\.\d+\b)+").ok()?;
 	let result = regex.find(&input)?;
