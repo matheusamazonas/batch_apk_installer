@@ -8,7 +8,7 @@ pub enum Error {
     AdbNotFound,
     IOError,
     ParseError,
-    CommandError
+    CommandError(String)
 }
 
 impl From<io::Error> for Error {
