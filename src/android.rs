@@ -1,5 +1,5 @@
-use std::process::{Command, Stdio};
 use crate::error::Error;
+use std::process::{Command, Stdio};
 
 pub fn has_adb() -> bool {
 	Command::new("adb")
@@ -15,7 +15,7 @@ pub fn get_devices() -> Result<Vec<String>, Error> {
 	let header_line_ix = output_str
 		.lines()
 		.position(|l| l.contains("List of devices attached"))
-		.ok_or(Error::CommandError(String::from("Failed to fetch Android devices.")))?;
+		.ok_or(Error::CommandError("Failed to fetch Android devices."))?;
 
 	let devices: Vec<String> = output_str
 		.lines()
