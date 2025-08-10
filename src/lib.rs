@@ -32,9 +32,9 @@ impl Config {
 /// # Examples 
 /// 
 /// ```
-/// assert_eq!(adb_installer::parse_version("5.1"), Ok("5.1".to_string()));
-/// assert_eq!(adb_installer::parse_version("5.1.0"), Ok("5.1.0".to_string()));
-/// assert_eq!(adb_installer::parse_version("5.1.1.1"), Ok("5.1.1.1".to_string()));
+/// assert_eq!(apk_installer::parse_version("5.1"), Ok("5.1".to_string()));
+/// assert_eq!(apk_installer::parse_version("5.1.0"), Ok("5.1.0".to_string()));
+/// assert_eq!(apk_installer::parse_version("5.1.1.1"), Ok("5.1.1.1".to_string()));
 /// ```
 pub fn parse_version(input: &str) -> Result<String, Error> {
 	let regex = Regex::new(r"\b\d+(\.\d+\b)+")?;
