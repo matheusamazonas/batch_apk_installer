@@ -1,26 +1,7 @@
-use std::io;
 use std::process::{Command, Stdio};
-use std::string;
+use crate::error::Error;
 
-#[derive(Debug)]
-pub enum Error {
-	CommandError,
-	ParseError,
-}
-
-impl From<io::Error> for Error {
-	fn from(_: io::Error) -> Self {
-		Error::CommandError
-	}
-}
-
-impl From<string::FromUtf8Error> for Error {
-	fn from(_: string::FromUtf8Error) -> Self {
-		Error::ParseError
-	}
-}
-
-pub fn is_adb_present() -> bool {
+pub fn has_adb() -> bool {
 	Command::new("adb")
 		.args(["--version"])
 		.stdout(Stdio::null())

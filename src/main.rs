@@ -2,7 +2,7 @@ use std::env;
 use std::process;
 
 fn main() {
-	if !adb_installer::android::is_adb_present() {
+	if !adb_installer::android::has_adb() {
 		eprintln!("ADB not found. Please ensure that ADB is installed.");
 		process::exit(1)
 	}
@@ -14,8 +14,8 @@ fn main() {
 	}
 
 	let version = match adb_installer::parse_version(&args[1]) {
-		Some(version) => version,
-		None => {
+		Ok(version) => version,
+		Err(_) => {
 			eprintln!("Wrong version format. Example: 5.1");
 			process::exit(1)
 		}
