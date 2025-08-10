@@ -20,7 +20,7 @@ impl From<string::FromUtf8Error> for Error {
 	}
 }
 
-pub fn is_present() -> bool {
+pub fn is_adb_present() -> bool {
 	Command::new("adb")
 		.args(["--version"])
 		.stdout(Stdio::null())

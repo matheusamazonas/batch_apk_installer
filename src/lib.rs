@@ -1,6 +1,8 @@
 use regex::{self, Regex};
 
-pub mod adb;
+pub mod android;
+
+
 
 /// Parses an input string into a version string.
 /// 

@@ -2,7 +2,7 @@ use std::env;
 use std::process;
 
 fn main() {
-	if !adb_installer::adb::is_present() {
+	if !adb_installer::android::is_adb_present() {
 		eprintln!("ADB not found. Please ensure that ADB is installed.");
 		process::exit(1)
 	}
@@ -21,7 +21,7 @@ fn main() {
 		}
 	};
 
-	let devices = match adb_installer::adb::get_devices() {
+	let devices = match adb_installer::android::get_devices() {
 		Ok(devices) if devices.len() > 0 => devices,
         Ok(_) => {
             eprintln!("No devices were found.");
