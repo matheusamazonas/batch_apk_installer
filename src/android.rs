@@ -25,7 +25,7 @@ pub fn get_devices() -> Result<Vec<String>, Error> {
 	return Ok(devices);
 
 	fn parse_device(line: &str) -> Option<String> {
-		if line.len() > 0 {
+		if !line.is_empty() {
 			Some(String::from(line))
 		} else {
 			None

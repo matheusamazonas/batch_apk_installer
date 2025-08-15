@@ -38,7 +38,7 @@ impl Config {
 					fs::create_dir_all(&folder_path)?;
 				}
 				let mut file = File::create(&file_path)?;
-				file.write(CONFIG_TEMPLATE.as_bytes())?;
+				file.write_all(CONFIG_TEMPLATE.as_bytes())?;
 				let file_path_str = file_path.to_str().unwrap();
 				println!(
 					"Config file not found. Created one at {file_path_str}. Modify it and try again"
@@ -73,7 +73,7 @@ impl Config {
 pub fn parse_version(input: &str) -> Result<String, Error> {
 	let regex = Regex::new(r"\b\d+(\.\d+\b)+")?;
 	let result = regex
-		.find(&input)
+		.find(input)
 		.ok_or(Error::ParseError(String::from("Failed to parse version.")))?;
 	Ok(String::from(result.as_str()))
 }

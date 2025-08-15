@@ -26,7 +26,7 @@ fn main() {
 	};
 
 	let devices = match apk_installer::android::get_devices() {
-		Ok(devices) if devices.len() > 0 => devices,
+		Ok(devices) if !devices.is_empty() => devices,
 		Ok(_) => {
 			eprintln!("No devices were found.");
 			process::exit(1)
