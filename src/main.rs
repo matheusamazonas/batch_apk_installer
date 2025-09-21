@@ -1,9 +1,14 @@
 use std::env;
 use std::process;
-use apk_installer::error::Error::CommandError;
+use crate::config::Config;
+use crate::error::Error;
+
+mod error;
+mod android;
+mod config;
 
 fn main() {
-	if !apk_installer::android::has_adb() {
+	if !android::has_adb() {
 		eprintln!("ADB not found. Please ensure that ADB is installed.");
 		process::exit(1)
 	}
@@ -14,9 +19,9 @@ fn main() {
 		process::exit(1);
 	}
 
-	let config = match apk_installer::Config::build(&args[1]) {
+	let config = match Config::build(&args[1]) {
 		Ok(config) => config,
-        Err(CommandError(_)) => {
+        Err(Error::CommandError(_)) => {
             process::exit(1);
         }
 		Err(e) => {
@@ -25,7 +30,7 @@ fn main() {
 		}
 	};
 
-	let devices = match apk_installer::android::get_devices() {
+	let devices = match android::get_devices() {
 		Ok(devices) if !devices.is_empty() => devices,
 		Ok(_) => {
 			eprintln!("No devices were found.");

@@ -1,12 +1,8 @@
-use crate::error::Error::{CommandError, IOError};
-use error::Error;
+use crate::error::Error;
 use regex::{self, Regex};
 use serde::Deserialize;
 use std::fs::{self, File};
 use std::io::Write;
-
-pub mod android;
-pub mod error;
 
 type Platform = String;
 type AppId = String;
@@ -27,8 +23,8 @@ pub struct Config {
 impl Config {
 	pub fn build(version: &str) -> Result<Config, Error> {
 		let version = parse_version(version)?;
-		let home_path =
-			std::env::home_dir().ok_or(IOError(String::from("Failed to find home directory.")))?;
+		let home_path = std::env::home_dir()
+            .ok_or(Error::IOError(String::from("Failed to find home directory.")))?;
 		let folder_path = home_path.join(CONFIG_PATH);
 		let file_path = folder_path.join(CONFIG_FILE);
 		let mut config = match fs::read_to_string(&file_path) {
@@ -43,7 +39,7 @@ impl Config {
 				println!(
 					"Config file not found. Created one at {file_path_str}. Modify it and try again"
 				);
-				return Err(CommandError("Config file not found."));
+				return Err(Error::CommandError("Config file not found."));
 			}
 		};
         
