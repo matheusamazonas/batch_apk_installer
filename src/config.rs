@@ -42,7 +42,7 @@ impl Config {
 				println!(
 					"Config file not found. Created one at {file_path_str}. Modify it and try again"
 				);
-				return Err(Error::CommandError("Config file not found."));
+				return Err(Error::ConfigError(String::from("Config file not found.")));
 			}
 		};
 

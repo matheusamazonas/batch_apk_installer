@@ -4,11 +4,11 @@ use string::FromUtf8Error;
 
 #[derive(Debug, PartialEq)]
 pub enum Error {
-	ArgumentError(&'static str),
-	AdbNotFound,
 	IOError(String),
 	ParseError(String),
-	CommandError(&'static str),
+	AdbError(String),
+	AaptError(String),
+	ConfigError(String),
 }
 
 impl From<io::Error> for Error {

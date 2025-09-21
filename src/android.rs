@@ -9,11 +9,11 @@ pub struct PackageFile {
 }
 
 pub fn has_adb() -> bool {
-	check_command("adb", "--version")
+	command_exists("adb", "--version")
 }
 
 pub fn has_aapt() -> bool {
-	check_command("aapt2", "version")
+	command_exists("aapt2", "version")
 }
 
 pub fn find_package_files(dir: &str) -> Result<Vec<PackageFile>, Error> {
@@ -24,7 +24,7 @@ pub fn find_package_files(dir: &str) -> Result<Vec<PackageFile>, Error> {
 	Ok(files)
 }
 
-fn check_command(command: &str, args: &str) -> bool {
+fn command_exists(command: &str, args: &str) -> bool {
 	Command::new(command)
 		.args([args])
 		.stdout(Stdio::null())
@@ -54,7 +54,7 @@ fn get_package_file(path: &str) -> Result<PackageFile, Error> {
 		let package = PackageFile { path, id };
 		Ok(package)
 	} else {
-		Err(Error::CommandError("Failed to get APK package name."))
+		Err(Error::AaptError(String::from("Failed to get APK package name.", )))
 	}
 }
 
@@ -64,7 +64,7 @@ pub fn get_devices() -> Result<Vec<String>, Error> {
 	let header_line_ix = output_str
 		.lines()
 		.position(|l| l.contains("List of devices attached"))
-		.ok_or(Error::CommandError("Failed to fetch Android devices."))?;
+		.ok_or(Error::AdbError(String::from("Failed to fetch Android devices.", )))?;
 
 	let devices: Vec<String> = output_str
 		.lines()

@@ -26,7 +26,8 @@ fn main() {
 
 	let config = match Config::build(&args[1]) {
 		Ok(config) => config,
-		Err(Error::CommandError(_)) => {
+		Err(Error::ConfigError(e)) => {
+			eprintln!("Config error: {e}.");
 			process::exit(1);
 		}
 		Err(e) => {
@@ -59,6 +60,6 @@ fn main() {
 		}
 	};
 	for apk in apks {
-		println!("Found apk: {apk:?}")
+		println!("Found package: {apk:?}")
 	}
 }
