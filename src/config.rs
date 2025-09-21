@@ -10,11 +10,13 @@ type Version = String;
 
 const CONFIG_PATH: &str = "Library/Application Support/APK installer";
 const CONFIG_FILE: &str = "config.toml";
-const CONFIG_TEMPLATE: &str = r#"platforms = [ "quest", "pico" ]
+const CONFIG_TEMPLATE: &str = r#"directory = "/Users/user_name/Desktop"
+platforms = [ "quest", "pico" ]
 app_ids = [ "com.company.product.app1", "com.company.product.app2" ]"#;
 
 #[derive(Deserialize)]
 pub struct Config {
+	pub directory: String,
 	platforms: Vec<Platform>,
 	app_ids: Vec<AppId>,
 	version: Version,
@@ -23,8 +25,9 @@ pub struct Config {
 impl Config {
 	pub fn build(version: &str) -> Result<Config, Error> {
 		let version = parse_version(version)?;
-		let home_path = std::env::home_dir()
-            .ok_or(Error::IOError(String::from("Failed to find home directory.")))?;
+		let home_path = std::env::home_dir().ok_or(Error::IOError(String::from(
+			"Failed to find home directory.",
+		)))?;
 		let folder_path = home_path.join(CONFIG_PATH);
 		let file_path = folder_path.join(CONFIG_FILE);
 		let mut config = match fs::read_to_string(&file_path) {
@@ -42,8 +45,8 @@ impl Config {
 				return Err(Error::CommandError("Config file not found."));
 			}
 		};
-        
-        // Version is a command-line argument, not an entry on the config file.
+
+		// Version is a command-line argument, not an entry on the config file.
 		let version_value = format!("\nversion = \"{version}\"");
 		config += &version_value;
 		let config = toml::from_str(config.as_str())?;

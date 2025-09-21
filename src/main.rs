@@ -1,11 +1,11 @@
-use std::env;
-use std::process;
 use crate::config::Config;
 use crate::error::Error;
+use std::env;
+use std::process;
 
-mod error;
 mod android;
 mod config;
+mod error;
 
 fn main() {
 	if !android::has_adb() {
@@ -13,10 +13,10 @@ fn main() {
 		process::exit(1)
 	}
 
-    if !android::has_aapt() {
-        eprintln!("AAPT not found. Please ensure that AAPT is installed.");
-        process::exit(1)
-    }
+	if !android::has_aapt() {
+		eprintln!("AAPT not found. Please ensure that AAPT is installed.");
+		process::exit(1)
+	}
 
 	let args: Vec<String> = env::args().collect();
 	if args.len() < 2 {
@@ -26,9 +26,9 @@ fn main() {
 
 	let config = match Config::build(&args[1]) {
 		Ok(config) => config,
-        Err(Error::CommandError(_)) => {
-            process::exit(1);
-        }
+		Err(Error::CommandError(_)) => {
+			process::exit(1);
+		}
 		Err(e) => {
 			eprintln!("Error when loading config: {e:?}");
 			process::exit(1)
@@ -48,6 +48,17 @@ fn main() {
 	};
 
 	for device in devices {
-		println!("Found device: {}", device);
+		println!("Found device: {device:?}");
+	}
+
+	let apks = match android::find_package_files(&config.directory) {
+		Ok(apks) => apks,
+		Err(e) => {
+			eprintln!("Failed to find packages: {e:?}");
+			process::exit(1);
+		}
+	};
+	for apk in apks {
+		println!("Found apk: {apk:?}")
 	}
 }
