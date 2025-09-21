@@ -9,6 +9,14 @@ pub fn has_adb() -> bool {
 		.is_ok()
 }
 
+pub fn has_aapt() -> bool {
+    Command::new("aapt2")
+        .args(["version"])
+        .stdout(Stdio::null())
+        .status()
+        .is_ok()
+}
+
 pub fn get_devices() -> Result<Vec<String>, Error> {
 	let output = Command::new("adb").args(["devices", "-l"]).output()?;
 	let output_str = String::from_utf8(output.stdout)?;

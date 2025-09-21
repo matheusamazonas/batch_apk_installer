@@ -13,6 +13,11 @@ fn main() {
 		process::exit(1)
 	}
 
+    if !android::has_aapt() {
+        eprintln!("AAPT not found. Please ensure that AAPT is installed.");
+        process::exit(1)
+    }
+
 	let args: Vec<String> = env::args().collect();
 	if args.len() < 2 {
 		eprintln!("Missing arguments: version.");
