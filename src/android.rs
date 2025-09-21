@@ -13,6 +13,7 @@ fn check_command(command: &str, args: &str) -> bool {
     Command::new(command)
         .args([args])
         .stdout(Stdio::null())
+        .stderr(Stdio::null())
         .status()
         .is_ok()
 }
