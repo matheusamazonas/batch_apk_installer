@@ -2,16 +2,16 @@ use crate::error::Error;
 use std::process::{Command, Stdio};
 
 pub fn has_adb() -> bool {
-	Command::new("adb")
-		.args(["--version"])
-		.stdout(Stdio::null())
-		.status()
-		.is_ok()
+	check_command("adb", "--version")
 }
 
 pub fn has_aapt() -> bool {
-    Command::new("aapt2")
-        .args(["version"])
+    check_command("aapt2", "version")
+}
+
+fn check_command(command: &str, args: &str) -> bool {
+    Command::new(command)
+        .args([args])
         .stdout(Stdio::null())
         .status()
         .is_ok()
