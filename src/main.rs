@@ -4,10 +4,10 @@ use std::env;
 use std::process;
 use std::process::{Command, Stdio};
 
-mod package;
 mod config;
-mod error;
 mod device;
+mod error;
+mod package;
 
 pub fn has_adb() -> bool {
 	command_exists("adb", "--version")

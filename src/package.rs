@@ -1,6 +1,6 @@
 use crate::error::Error;
 use std::fs;
-use std::process::{Command, Stdio};
+use std::process::Command;
 
 #[derive(Debug)]
 pub struct PackageFile {
@@ -15,8 +15,6 @@ pub fn find_package_files(dir: &str) -> Result<Vec<PackageFile>, Error> {
 		.collect();
 	Ok(files)
 }
-
-
 
 fn find_apk_files(dir: &str) -> Result<Vec<String>, Error> {
 	let entries = fs::read_dir(dir)?
@@ -39,8 +37,8 @@ fn get_package_file(path: &str) -> Result<PackageFile, Error> {
 		let package = PackageFile { path, id };
 		Ok(package)
 	} else {
-		Err(Error::AaptError(String::from("Failed to get APK package name.", )))
+		Err(Error::AaptError(String::from(
+			"Failed to get APK package name.",
+		)))
 	}
 }
-
-
