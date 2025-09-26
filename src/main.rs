@@ -2,18 +2,37 @@ use crate::config::Config;
 use crate::error::Error;
 use std::env;
 use std::process;
+use std::process::{Command, Stdio};
 
-mod android;
+mod package;
 mod config;
 mod error;
+mod device;
+
+pub fn has_adb() -> bool {
+	command_exists("adb", "--version")
+}
+
+pub fn has_aapt() -> bool {
+	command_exists("aapt2", "version")
+}
+
+fn command_exists(command: &str, args: &str) -> bool {
+	Command::new(command)
+		.args([args])
+		.stdout(Stdio::null())
+		.stderr(Stdio::null())
+		.status()
+		.is_ok()
+}
 
 fn main() {
-	if !android::has_adb() {
+	if !has_adb() {
 		eprintln!("ADB not found. Please ensure that ADB is installed.");
 		process::exit(1)
 	}
 
-	if !android::has_aapt() {
+	if !has_aapt() {
 		eprintln!("AAPT not found. Please ensure that AAPT is installed.");
 		process::exit(1)
 	}
@@ -36,7 +55,7 @@ fn main() {
 		}
 	};
 
-	let devices = match android::get_devices() {
+	let devices = match device::get_devices() {
 		Ok(devices) if !devices.is_empty() => devices,
 		Ok(_) => {
 			eprintln!("No devices were found.");
@@ -52,7 +71,7 @@ fn main() {
 		println!("Found device: {device:?}");
 	}
 
-	let apks = match android::find_package_files(&config.directory) {
+	let apks = match package::find_package_files(&config.directory) {
 		Ok(apks) => apks,
 		Err(e) => {
 			eprintln!("Failed to find packages: {e:?}");

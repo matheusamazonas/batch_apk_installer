@@ -8,14 +8,6 @@ pub struct PackageFile {
 	id: String,
 }
 
-pub fn has_adb() -> bool {
-	command_exists("adb", "--version")
-}
-
-pub fn has_aapt() -> bool {
-	command_exists("aapt2", "version")
-}
-
 pub fn find_package_files(dir: &str) -> Result<Vec<PackageFile>, Error> {
 	let files = find_apk_files(dir)?
 		.into_iter()
@@ -24,14 +16,7 @@ pub fn find_package_files(dir: &str) -> Result<Vec<PackageFile>, Error> {
 	Ok(files)
 }
 
-fn command_exists(command: &str, args: &str) -> bool {
-	Command::new(command)
-		.args([args])
-		.stdout(Stdio::null())
-		.stderr(Stdio::null())
-		.status()
-		.is_ok()
-}
+
 
 fn find_apk_files(dir: &str) -> Result<Vec<String>, Error> {
 	let entries = fs::read_dir(dir)?
@@ -58,26 +43,4 @@ fn get_package_file(path: &str) -> Result<PackageFile, Error> {
 	}
 }
 
-pub fn get_devices() -> Result<Vec<String>, Error> {
-	let output = Command::new("adb").args(["devices", "-l"]).output()?;
-	let output_str = String::from_utf8(output.stdout)?;
-	let header_line_ix = output_str
-		.lines()
-		.position(|l| l.contains("List of devices attached"))
-		.ok_or(Error::AdbError(String::from("Failed to fetch Android devices.", )))?;
 
-	let devices: Vec<String> = output_str
-		.lines()
-		.skip(header_line_ix + 1)
-		.filter_map(parse_device)
-		.collect();
-	return Ok(devices);
-
-	fn parse_device(line: &str) -> Option<String> {
-		if !line.is_empty() {
-			Some(String::from(line))
-		} else {
-			None
-		}
-	}
-}
