@@ -55,7 +55,7 @@ fn main() {
 		}
 	};
 
-	let devices = match device::get_devices() {
+	let devices = match device::get_devices(&config.platforms) {
 		Ok(devices) if !devices.is_empty() => devices,
 		Ok(_) => {
 			eprintln!("No devices were found.");
@@ -68,7 +68,7 @@ fn main() {
 	};
 
 	for device in devices {
-		println!("Found device: {device:?}");
+		println!("Found device: {device}");
 	}
 
 	let apks = match package::find_package_files(&config.directory) {

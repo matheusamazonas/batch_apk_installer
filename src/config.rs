@@ -4,7 +4,7 @@ use serde::Deserialize;
 use std::fs::{self, File};
 use std::io::Write;
 
-type Platform = String;
+pub type Platform = String;
 type AppId = String;
 type Version = String;
 
@@ -17,7 +17,7 @@ app_ids = [ "com.company.product.app1", "com.company.product.app2" ]"#;
 #[derive(Deserialize)]
 pub struct Config {
 	pub directory: String,
-	platforms: Vec<Platform>,
+	pub platforms: Vec<Platform>,
 	app_ids: Vec<AppId>,
 	version: Version,
 }
