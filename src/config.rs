@@ -6,7 +6,6 @@ use std::io::Write;
 
 pub type Platform = String;
 type AppId = String;
-type Version = String;
 
 const CONFIG_PATH: &str = "Library/Application Support/APK installer";
 const CONFIG_FILE: &str = "config.toml";
@@ -19,7 +18,6 @@ pub struct Config {
 	pub directory: String,
 	pub platforms: Vec<Platform>,
 	app_ids: Vec<AppId>,
-	version: Version,
 }
 
 impl Config {
