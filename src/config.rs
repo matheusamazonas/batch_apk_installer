@@ -25,9 +25,8 @@ pub struct Config {
 impl Config {
 	pub fn build(version: &str) -> Result<Config, Error> {
 		let version = parse_version(version)?;
-		let home_path = std::env::home_dir().ok_or(Error::IOError(String::from(
-			"Failed to find home directory.",
-		)))?;
+		let home_path = std::env::home_dir()
+			.ok_or(Error::IO(String::from("Failed to find home directory.")))?;
 		let folder_path = home_path.join(CONFIG_PATH);
 		let file_path = folder_path.join(CONFIG_FILE);
 		let mut config = match fs::read_to_string(&file_path) {
@@ -42,7 +41,7 @@ impl Config {
 				println!(
 					"Config file not found. Created one at {file_path_str}. Modify it and try again"
 				);
-				return Err(Error::ConfigError(String::from("Config file not found.")));
+				return Err(Error::Config(String::from("Config file not found.")));
 			}
 		};
 
@@ -73,7 +72,7 @@ pub fn parse_version(input: &str) -> Result<String, Error> {
 	let regex = Regex::new(r"\b\d+(\.\d+\b)+")?;
 	let result = regex
 		.find(input)
-		.ok_or(Error::ParseError(String::from("Failed to parse version.")))?;
+		.ok_or(Error::Parsing(String::from("Failed to parse version.")))?;
 	Ok(String::from(result.as_str()))
 }
 

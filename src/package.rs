@@ -37,7 +37,7 @@ fn get_package_file(path: &str) -> Result<PackageFile, Error> {
 		let package = PackageFile { path, id };
 		Ok(package)
 	} else {
-		Err(Error::AaptError(String::from(
+		Err(Error::Package(String::from(
 			"Failed to get APK package name.",
 		)))
 	}

@@ -45,7 +45,7 @@ fn main() {
 
 	let config = match Config::build(&args[1]) {
 		Ok(config) => config,
-		Err(Error::ConfigError(e)) => {
+		Err(Error::Config(e)) => {
 			eprintln!("Config error: {e}.");
 			process::exit(1);
 		}
