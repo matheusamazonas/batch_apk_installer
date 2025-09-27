@@ -71,14 +71,15 @@ fn main() {
 		println!("Found device: {device}");
 	}
 
-	let apks = match package::find_package_files(&config.directory) {
+	let packages = match package::find_package_files(&config.directory) {
 		Ok(apks) => apks,
 		Err(e) => {
 			eprintln!("Failed to find packages: {e:?}");
 			process::exit(1);
 		}
 	};
-	for apk in apks {
-		println!("Found package: {apk:?}")
+	
+	for package in packages {
+		println!("Found package: {package:?}")
 	}
 }
