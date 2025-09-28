@@ -1,5 +1,7 @@
 use crate::config::Config;
 use crate::error::Error;
+use crate::installation::InstallationRequest;
+use crate::package::PackageFile;
 use std::env;
 use std::process;
 use std::process::{Command, Stdio};
@@ -7,6 +9,7 @@ use std::process::{Command, Stdio};
 mod config;
 mod device;
 mod error;
+mod installation;
 mod package;
 
 pub fn has_adb() -> bool {
@@ -55,7 +58,7 @@ fn main() {
 		}
 	};
 
-	let devices = match device::get_devices(&config.platforms) {
+	let devices = match device::get_devices(config.platforms()) {
 		Ok(devices) if !devices.is_empty() => devices,
 		Ok(_) => {
 			eprintln!("No devices were found.");
@@ -67,11 +70,11 @@ fn main() {
 		}
 	};
 
-	for device in devices {
+	for device in &devices {
 		println!("Found device: {device}");
 	}
 
-	let packages = match package::find_package_files(&config.directory) {
+	let packages = match PackageFile::find_all(config.directory(), config.packages()) {
 		Ok(apks) => apks,
 		Err(e) => {
 			eprintln!("Failed to find packages: {e:?}");
@@ -79,7 +82,20 @@ fn main() {
 		}
 	};
 
-	for package in packages {
-		println!("Found package: {package:?}")
+	for package in &packages {
+		println!("Found package file: {package:?}")
+	}
+
+	let requests = InstallationRequest::build_requests(&devices, &packages);
+	for request in requests {
+		let info = request.to_string();
+		match request.perform() {
+			Ok(_) => {
+				println!("{info} succeeded.");
+			}
+			Err(e) => {
+				println!("{info} failed with error: {e}");
+			}
+		}
 	}
 }

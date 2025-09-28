@@ -1,4 +1,5 @@
 use crate::error::Error;
+use crate::package::PackageConfig;
 use regex::{self, Regex};
 use serde::Deserialize;
 use std::fs::{self, File};
@@ -25,15 +26,9 @@ id = "com.company.product.quest_only_app"
 platforms = [ "pico" ]"#;
 
 #[derive(Deserialize)]
-pub struct PackageConfig {
-	pub id: PackageID,
-	pub platforms: Vec<Platform>,
-}
-
-#[derive(Deserialize)]
 pub struct Config {
-	pub directory: String,
-	pub platforms: Vec<Platform>,
+	directory: String,
+	platforms: Vec<Platform>,
 	packages: Vec<PackageConfig>,
 }
 
@@ -67,6 +62,18 @@ impl Config {
 		config += &version;
 		let config = toml::from_str(config.as_str())?;
 		Ok(config)
+	}
+
+	pub fn directory(&self) -> &str {
+		&self.directory
+	}
+
+	pub fn platforms(&self) -> &[Platform] {
+		&self.platforms
+	}
+
+	pub fn packages(&self) -> &[PackageConfig] {
+		&self.packages
 	}
 }
 

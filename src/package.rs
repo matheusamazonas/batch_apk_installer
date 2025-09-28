@@ -1,7 +1,15 @@
+use crate::config::{PackageID, Platform};
 use crate::error::Error;
+use serde::Deserialize;
 use std::fs;
 use std::process::Command;
-use crate::config::PackageID;
+
+#[derive(Debug)]
+pub struct Package {
+	id: PackageID,
+	path: String,
+	platforms: Vec<Platform>,
+}
 
 #[derive(Debug)]
 pub struct PackageFile {
@@ -9,12 +17,45 @@ pub struct PackageFile {
 	id: PackageID,
 }
 
-pub fn find_package_files(dir: &str) -> Result<Vec<PackageFile>, Error> {
-	let files = find_apk_files(dir)?
-		.into_iter()
-		.filter_map(|f| get_package_file(&f).ok())
-		.collect();
-	Ok(files)
+#[derive(Deserialize, Debug, Clone)]
+pub struct PackageConfig {
+	id: PackageID,
+	platforms: Vec<Platform>,
+}
+
+impl Package {
+	pub fn id(&self) -> &PackageID {
+		&self.id
+	}
+
+	pub fn path(&self) -> &str {
+		&self.path
+	}
+
+	pub fn platforms(&self) -> &[Platform] {
+		&self.platforms
+	}
+}
+
+impl PackageFile {
+	pub fn find_all(dir: &str, configs: &[PackageConfig]) -> Result<Vec<Package>, Error> {
+		fn build_package(file: PackageFile, configs: &[PackageConfig]) -> Option<Package> {
+			let config = configs.iter().find(|c| c.id == file.id)?;
+			let package = Package {
+				id: file.id,
+				path: file.path,
+				platforms: config.platforms.clone(),
+			};
+			Some(package)
+		}
+
+		let files = find_apk_files(dir)?
+			.into_iter()
+			.filter_map(|f| get_package_file(&f).ok())
+			.filter_map(|f| build_package(f, configs))
+			.collect();
+		Ok(files)
+	}
 }
 
 fn find_apk_files(dir: &str) -> Result<Vec<String>, Error> {

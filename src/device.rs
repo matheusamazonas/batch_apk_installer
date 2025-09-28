@@ -5,9 +5,23 @@ use std::fmt::Display;
 use std::process::Command;
 
 pub struct Device {
-	pub name: String,
+	name: String,
 	id: String,
 	platform: String,
+}
+
+impl Device {
+	pub fn name(&self) -> &str {
+		&self.name
+	}
+
+	pub fn id(&self) -> &str {
+		&self.id
+	}
+
+	pub fn platform(&self) -> &String {
+		&self.platform
+	}
 }
 
 impl Display for Device {

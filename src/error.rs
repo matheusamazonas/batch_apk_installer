@@ -1,4 +1,5 @@
 use regex::Error as RegexError;
+use std::fmt::Display;
 use std::{io, string};
 use string::FromUtf8Error;
 
@@ -9,6 +10,20 @@ pub enum Error {
 	Device(String),
 	Package(String),
 	Config(String),
+	Installation(String),
+}
+
+impl Display for Error {
+	fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+		match self {
+			Error::IO(e) => write!(f, "IO Error: {}", e),
+			Error::Parsing(e) => write!(f, "Parsing Error: {}", e),
+			Error::Device(e) => write!(f, "Device Error: {}", e),
+			Error::Package(e) => write!(f, "Package Error: {}", e),
+			Error::Config(e) => write!(f, "Config Error: {}", e),
+			Error::Installation(e) => write!(f, "Installation Error: {}", e),
+		}
+	}
 }
 
 impl From<io::Error> for Error {
