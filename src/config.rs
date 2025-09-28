@@ -5,19 +5,36 @@ use std::fs::{self, File};
 use std::io::Write;
 
 pub type Platform = String;
-type AppId = String;
+pub type PackageID = String;
 
 const CONFIG_PATH: &str = "Library/Application Support/APK installer";
 const CONFIG_FILE: &str = "config.toml";
 const CONFIG_TEMPLATE: &str = r#"directory = "/Users/user_name/Desktop"
 platforms = [ "quest", "pico" ]
-app_ids = [ "com.company.product.app1", "com.company.product.app2" ]"#;
+
+[[packages]]
+id = "com.company.product.app"
+platforms = [ "pico", "quest" ]
+
+[[packages]]
+id = "com.company.product.pico_only_app"
+platforms = [ "pico" ]
+
+[[packages]]
+id = "com.company.product.quest_only_app"
+platforms = [ "pico" ]"#;
+
+#[derive(Deserialize)]
+pub struct PackageConfig {
+	pub id: PackageID,
+	pub platforms: Vec<Platform>,
+}
 
 #[derive(Deserialize)]
 pub struct Config {
 	pub directory: String,
 	pub platforms: Vec<Platform>,
-	app_ids: Vec<AppId>,
+	packages: Vec<PackageConfig>,
 }
 
 impl Config {
@@ -81,7 +98,7 @@ mod tests {
 	use super::*;
 
 	#[test]
-	fn parse_valid_2_regions() {
+	fn parse_version_2_regions() {
 		assert_eq!(parse_version("5.1"), Ok("5.1".to_string()));
 		assert_eq!(parse_version("0.0"), Ok("0.0".to_string()));
 		assert_eq!(parse_version("0.1"), Ok("0.1".to_string()));
@@ -91,7 +108,7 @@ mod tests {
 	}
 
 	#[test]
-	fn parse_valid_3_regions() {
+	fn parse_version_3_regions() {
 		assert_eq!(parse_version("5.1.0"), Ok("5.1.0".to_string()));
 		assert_eq!(parse_version("0.0.0"), Ok("0.0.0".to_string()));
 		assert_eq!(parse_version("0.1.0"), Ok("0.1.0".to_string()));
@@ -101,7 +118,7 @@ mod tests {
 	}
 
 	#[test]
-	fn parse_valid_many_regions() {
+	fn parse_version_many_regions() {
 		assert_eq!(parse_version("5.1.1.1"), Ok("5.1.1.1".to_string()));
 		assert_eq!(parse_version("0.0.0.0.0.0"), Ok("0.0.0.0.0.0".to_string()));
 		assert_eq!(
@@ -115,7 +132,7 @@ mod tests {
 	}
 
 	#[test]
-	fn parse_invalid() {
+	fn parse_invalid_version() {
 		// 1 region
 		assert!(parse_version("1").is_err());
 		assert!(parse_version("a").is_err());

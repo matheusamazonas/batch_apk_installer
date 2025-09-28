@@ -1,11 +1,12 @@
 use crate::error::Error;
 use std::fs;
 use std::process::Command;
+use crate::config::PackageID;
 
 #[derive(Debug)]
 pub struct PackageFile {
 	path: String,
-	id: String,
+	id: PackageID,
 }
 
 pub fn find_package_files(dir: &str) -> Result<Vec<PackageFile>, Error> {
