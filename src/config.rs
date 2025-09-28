@@ -44,8 +44,8 @@ impl Config {
 		};
 
 		// Version is a command-line argument, not an entry on the config file.
-		let version_value = format!("\nversion = \"{version}\"");
-		config += &version_value;
+		let version = format!("\nversion = \"{version}\"");
+		config += &version;
 		let config = toml::from_str(config.as_str())?;
 		Ok(config)
 	}

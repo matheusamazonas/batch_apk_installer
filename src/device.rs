@@ -18,15 +18,15 @@ impl Display for Device {
 
 pub fn get_devices(platforms: &[Platform]) -> Result<Vec<Device>, Error> {
 	let output = Command::new("adb").args(["devices", "-l"]).output()?;
-	let output_str = String::from_utf8(output.stdout)?;
-	let header_line_ix = output_str
+	let output = String::from_utf8(output.stdout)?;
+	let header_line_ix = output
 		.lines()
 		.position(|l| l.contains("List of devices attached"))
 		.ok_or(Error::Device(String::from(
 			"Failed to fetch Android devices.",
 		)))?;
 
-	let devices = output_str
+	let devices = output
 		.lines()
 		.skip(header_line_ix + 1)
 		.filter(|l| !l.is_empty())
