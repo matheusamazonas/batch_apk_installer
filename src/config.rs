@@ -35,9 +35,11 @@ impl Config {
 				}
 				let mut file = File::create(&file_path)?;
 				file.write_all(CONFIG_TEMPLATE.as_bytes())?;
-				let file_path_str = file_path.to_str().unwrap();
+				let file_path = file_path
+					.to_str()
+					.ok_or(Error::Config(String::from("Config file path is not Unicode.")))?;
 				println!(
-					"Config file not found. Created one at {file_path_str}. Modify it and try again"
+					"Config file not found. Created one at {file_path}. Modify it and try again"
 				);
 				return Err(Error::Config(String::from("Config file not found.")));
 			}
