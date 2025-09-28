@@ -78,7 +78,7 @@ fn main() {
 			process::exit(1);
 		}
 	};
-	
+
 	for package in packages {
 		println!("Found package: {package:?}")
 	}
