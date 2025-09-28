@@ -36,20 +36,26 @@ pub fn get_devices(platforms: &[Platform]) -> Result<Vec<Device>, Error> {
 }
 
 fn parse_device(line: &str, platforms: &[Platform]) -> Option<Device> {
-	let regex = Regex::new(r"(\w+)\s+.*model:(\w+)").ok()?;
-	// let regex = Regex::new(r"(\S+)\s+").ok()?;
-	let caps = regex.captures(line)?;
-	let id = String::from(caps.get(1)?.as_str());
-	let model = caps.get(2)?.as_str();
-	let platform = get_platform(model, platforms)?;
+	let (id, platform) = parse_device_info(line, platforms)?;
 	let name = get_device_name(&id).ok()?;
 	let device = Device { id, name, platform };
 	Some(device)
 }
 
-fn get_platform(model: &str, platforms: &[Platform]) -> Option<Platform> {
-	let model = model.to_lowercase();
-	let platform = platforms.iter().find(|p| model.contains(*p))?;
+fn parse_device_info(line: &str, platforms: &[Platform]) -> Option<(String, Platform)> {
+	let regex = Regex::new(r"(\w+)\s+.*model:(\w+)\sdevice:(\w+)").ok()?;
+	let caps = regex.captures(line)?;
+	let id = String::from(caps.get(1)?.as_str());
+	let model = caps.get(2)?.as_str();
+	let device_name = caps.get(3)?.as_str();
+	let platform = get_platform(model, platforms)
+		.or(get_platform(device_name, platforms))?;
+	Some((id, platform))
+}
+
+fn get_platform(identifier: &str, platforms: &[Platform]) -> Option<Platform> {
+	let identifier = identifier.to_lowercase();
+	let platform = platforms.iter().find(|p| identifier.contains(*p))?;
 	Some(platform.clone())
 }
 
