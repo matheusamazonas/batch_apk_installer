@@ -82,10 +82,6 @@ fn main() {
 		}
 	};
 
-	for package in &packages {
-		println!("Found package file: {package:?}")
-	}
-
 	let requests = InstallationRequest::build_requests(&devices, &packages);
 	for request in requests {
 		let info = request.to_string();

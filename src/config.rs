@@ -16,14 +16,16 @@ platforms = [ "quest", "pico" ]
 [[packages]]
 id = "com.company.product.app"
 platforms = [ "pico", "quest" ]
+match_file_name = false
 
 [[packages]]
 id = "com.company.product.pico_only_app"
 platforms = [ "pico" ]
-
+match_file_name = true
 [[packages]]
 id = "com.company.product.quest_only_app"
-platforms = [ "pico" ]"#;
+platforms = [ "pico" ]
+match_file_name = true"#;
 
 #[derive(Deserialize)]
 pub struct Config {
@@ -47,9 +49,9 @@ impl Config {
 				}
 				let mut file = File::create(&file_path)?;
 				file.write_all(CONFIG_TEMPLATE.as_bytes())?;
-				let file_path = file_path
-					.to_str()
-					.ok_or(Error::Config(String::from("Config file path is not Unicode.")))?;
+				let file_path = file_path.to_str().ok_or(Error::Config(String::from(
+					"Config file path is not Unicode.",
+				)))?;
 				println!(
 					"Config file not found. Created one at {file_path}. Modify it and try again"
 				);

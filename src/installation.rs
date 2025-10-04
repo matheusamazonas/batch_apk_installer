@@ -16,9 +16,7 @@ impl InstallationRequest<'_> {
 	) -> Vec<InstallationRequest<'a>> {
 		let mut requests: Vec<InstallationRequest> = Vec::new();
 		for device in devices {
-			let matches = packages
-				.iter()
-				.filter(|p| p.platforms().contains(device.platform()));
+			let matches = packages.iter().filter(|p| is_package_match(device, p));
 			for package in matches {
 				let request = InstallationRequest { device, package };
 				requests.push(request);
@@ -29,10 +27,11 @@ impl InstallationRequest<'_> {
 	pub fn perform(self) -> Result<(), Error> {
 		let package = self.package;
 		let path = package.path();
+		let file_name = package.file_name();
 		let package_id = package.id();
 		let device = self.device;
 		let device_name = device.name();
-		println!("Installing {package_id} on {device_name}");
+		println!("Installing {package_id} ({file_name}) on {device_name}...");
 		let output = Command::new("adb")
 			.args(["-s", device.id(), "install", path])
 			.output();
@@ -47,4 +46,16 @@ impl Display for InstallationRequest<'_> {
 	fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
 		write!(f, "Install of {} on {}", self.package.id(), self.device.name())
 	}
+}
+
+fn is_package_match(device: &Device, package: &Package) -> bool {
+	package.platforms().iter().any(|p| {
+		match package.match_file_name() {
+			false => device.platform() == p,
+			true => package
+				.file_name()
+				.to_lowercase()
+				.contains(device.platform()),
+		}
+	})
 }

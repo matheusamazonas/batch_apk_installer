@@ -2,18 +2,21 @@ use crate::config::{PackageID, Platform};
 use crate::error::Error;
 use serde::Deserialize;
 use std::fs;
+use std::path::PathBuf;
 use std::process::Command;
 
 #[derive(Debug)]
 pub struct Package {
 	id: PackageID,
 	path: String,
+	file_name: String,
 	platforms: Vec<Platform>,
+	match_file_name: bool,
 }
 
 #[derive(Debug)]
 pub struct PackageFile {
-	path: String,
+	path: PathBuf,
 	id: PackageID,
 }
 
@@ -21,19 +24,45 @@ pub struct PackageFile {
 pub struct PackageConfig {
 	id: PackageID,
 	platforms: Vec<Platform>,
+	match_file_name: bool,
 }
 
 impl Package {
+	pub fn try_new(
+		file: PackageFile,
+		platforms: Vec<Platform>,
+		match_file_name: bool,
+	) -> Option<Package> {
+		let file_name = file.path.file_name()?.to_str()?.to_string();
+		let path = file.path.into_os_string().into_string().ok()?;
+		let package = Package {
+			id: file.id,
+			path,
+			file_name,
+			platforms,
+			match_file_name,
+		};
+		Some(package)
+	}
+
 	pub fn id(&self) -> &PackageID {
 		&self.id
 	}
 
-	pub fn path(&self) -> &str {
+	pub fn path(&self) -> &String {
 		&self.path
 	}
 
 	pub fn platforms(&self) -> &[Platform] {
 		&self.platforms
+	}
+
+	pub fn file_name(&self) -> &String {
+		&self.file_name
+	}
+
+	pub fn match_file_name(&self) -> bool {
+		self.match_file_name
 	}
 }
 
@@ -41,11 +70,7 @@ impl PackageFile {
 	pub fn find_all(dir: &str, configs: &[PackageConfig]) -> Result<Vec<Package>, Error> {
 		fn build_package(file: PackageFile, configs: &[PackageConfig]) -> Option<Package> {
 			let config = configs.iter().find(|c| c.id == file.id)?;
-			let package = Package {
-				id: file.id,
-				path: file.path,
-				platforms: config.platforms.clone(),
-			};
+			let package = Package::try_new(file, config.platforms.clone(), config.match_file_name)?;
 			Some(package)
 		}
 
@@ -58,24 +83,26 @@ impl PackageFile {
 	}
 }
 
-fn find_apk_files(dir: &str) -> Result<Vec<String>, Error> {
+fn find_apk_files(dir: &str) -> Result<Vec<PathBuf>, Error> {
 	let entries = fs::read_dir(dir)?
 		.filter_map(|e| e.ok())
 		.map(|e| e.path())
 		.filter(|path| path.extension().is_some_and(|ext| ext == "apk"))
-		.filter_map(|path| path.into_os_string().into_string().ok())
 		.collect();
 	Ok(entries)
 }
 
-fn get_package_file(path: &str) -> Result<PackageFile, Error> {
+fn get_package_file(path: &PathBuf) -> Result<PackageFile, Error> {
+	let path_str = path
+		.to_str()
+		.ok_or(Error::Package(String::from("Failed to get file path.")))?;
 	let output = Command::new("aapt2")
-		.args(["dump", "packagename", path])
+		.args(["dump", "packagename", path_str])
 		.output()?;
 	if output.status.success() {
 		let output = String::from_utf8(output.stdout)?;
 		let id = String::from(output.trim_end());
-		let path = String::from(path);
+		let path = PathBuf::from(path);
 		let package = PackageFile { path, id };
 		Ok(package)
 	} else {
