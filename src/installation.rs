@@ -1,57 +1,43 @@
 use crate::device::Device;
 use crate::error::Error;
 use crate::package::Package;
-use std::fmt::Display;
 use std::process::Command;
 
-pub struct InstallationRequest<'a> {
-	device: &'a Device,
-	package: &'a Package,
+pub struct DeviceInstallations {
+	device: Device,
+	packages: Vec<Package>,
 }
 
-impl InstallationRequest<'_> {
-	pub fn build_requests<'a>(
-		devices: &'a [Device],
-		packages: &'a [Package],
-	) -> Vec<InstallationRequest<'a>> {
-		let mut requests: Vec<InstallationRequest> = Vec::new();
+impl DeviceInstallations {
+	pub fn build_requests(
+		devices: &Vec<Device>,
+		packages: &Vec<Package>,
+	) -> Vec<DeviceInstallations> {
+		let mut requests: Vec<DeviceInstallations> = Vec::new();
 		for device in devices {
-			let matches = packages.iter().filter(|p| is_package_match(device, p));
+			let device = device.clone();
+			let matches = packages.iter()
+				.filter(|p| is_package_match(&device, p));
+			let mut packages = vec![];
 			for package in matches {
-				let request = InstallationRequest { device, package };
-				requests.push(request);
+				let package = package.clone();
+				packages.push(package);
 			}
+			let request = DeviceInstallations { device, packages };
+			requests.push(request);
 		}
 		requests
 	}
-	pub fn perform(self) -> Result<(), Error> {
-		let package = self.package;
-		let path = package.path();
-		let device = self.device;
-		let output = Command::new("adb")
-			.args(["-s", device.id(), "install", path])
-			.output();
-		match output {
-			Ok(_) => Ok(()),
-			Err(e) => Err(Error::Installation(format!("{}", e))),
-		}
-	}
-}
-
-impl Display for InstallationRequest<'_> {
-	fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-		write!(
-			f,
-			"Installation of {} ({}) on {}",
-			self.package.id(),
-			self.package.file_name(),
-			self.device.name()
-		)
+	pub fn perform(self) -> Vec<Result<String, Error>> {
+		self.packages.iter()
+			.map(|p| perform_install(&self.device, p))
+			.collect()
 	}
 }
 
 fn is_package_match(device: &Device, package: &Package) -> bool {
-	package.platforms().iter()
+	package.platforms()
+		.iter()
 		.any(|p| match package.match_file_name() {
 			false => device.platform() == p,
 			true => package
@@ -59,4 +45,23 @@ fn is_package_match(device: &Device, package: &Package) -> bool {
 				.to_lowercase()
 				.contains(device.platform()),
 		})
+}
+
+fn perform_install(device: &Device, package: &Package) -> Result<String, Error> {
+	let path = package.path();
+	let output = Command::new("adb")
+		.args(["-s", device.id(), "install", path])
+		.output();
+	match output {
+		Ok(_) => {
+			let message = format!("Successfully installed {} ({}) on {}. ✅", 
+								  package.id(), package.file_name(), device.name());
+			Ok(message)
+		},
+		Err(e) => {
+			let message = format!("Failed to install {} ({}) on {}. ❌ Error: {}",
+			                       package.id(), package.file_name(), device.name(), e);
+			Err(Error::Installation(message))
+		},
+	}
 }

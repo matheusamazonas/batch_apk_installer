@@ -1,10 +1,11 @@
 use crate::config::Config;
 use crate::error::Error;
-use crate::installation::InstallationRequest;
+use crate::installation::DeviceInstallations;
 use crate::package::PackageFile;
 use std::env;
 use std::process;
 use std::process::{Command, Stdio};
+use std::thread;
 
 mod config;
 mod device;
@@ -82,7 +83,8 @@ fn main() {
 		}
 	};
 
-	let requests = InstallationRequest::build_requests(&devices, &packages);
+	let requests = DeviceInstallations::build_requests(&devices, &packages);
+	let mut handles = vec![];
 	match requests.len() {
 		0 => {
 			eprintln!("No installation requests found.");
@@ -91,15 +93,19 @@ fn main() {
 		count => {
 			println!("Installing {count} requests...");
 			for request in requests {
-				let info = request.to_string();
-				match request.perform() {
-					Ok(_) => {
-						println!("{info} succeeded. ✅");
+				let handle = thread::spawn(move || {
+					for outcome in request.perform() {
+						match outcome {
+							Ok(o) => println!("{o}"),
+							Err(e) => eprintln!("{e}"),
+						}
 					}
-					Err(e) => {
-						println!("{info} failed with error: ❌{e}");
-					}
-				}
+				});
+				handles.push(handle);
+			}
+
+			for handle in handles {
+				handle.join().unwrap();
 			}
 		}
 	}
