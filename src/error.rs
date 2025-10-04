@@ -3,7 +3,7 @@ use std::fmt::Display;
 use std::{io, string};
 use string::FromUtf8Error;
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub enum Error {
 	IO(String),
 	Parsing(String),

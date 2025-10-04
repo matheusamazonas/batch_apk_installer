@@ -2,6 +2,8 @@ use crate::device::Device;
 use crate::error::Error;
 use crate::package::Package;
 use std::process::Command;
+use std::sync::{Arc, Mutex};
+use std::thread;
 
 pub struct DeviceInstallations {
 	device: Device,
@@ -29,9 +31,37 @@ impl DeviceInstallations {
 		requests
 	}
 	pub fn perform(self) -> Vec<Result<String, Error>> {
-		self.packages.iter()
-			.map(|p| perform_install(&self.device, p))
-			.collect()
+		let mut handles = vec![];
+		let outcomes = vec![];
+		let outcomes = Arc::new(Mutex::new(outcomes));
+		
+		for package in self.packages {
+			let package = package.clone();
+			let device = self.device.clone();
+			let outcomes = outcomes.clone();
+			let handle = thread::spawn(move || {
+				let outcome = perform_install(&device, &package);
+				match outcomes.lock() {
+				    Ok(mut outcomes) => outcomes.push(outcome),
+					Err(e) => eprintln!("Failed to acquire lock when performing install: {:?}", e),
+				}
+			});
+			handles.push(handle);
+		}
+		
+		for handle in handles {
+			handle.join().unwrap();
+		}
+		
+		// It's fine to unwrap here because all threads have joined.
+		outcomes.lock().unwrap().iter().map(clone_outcome).collect()
+	}
+}
+
+fn clone_outcome(r: &Result<String, Error>) -> Result<String, Error> {
+	match r {
+		Ok(o) => Ok(o.clone()),
+		Err(e) => Err(e.clone())
 	}
 }
 
