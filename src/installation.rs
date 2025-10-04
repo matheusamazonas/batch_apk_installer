@@ -30,6 +30,11 @@ impl DeviceInstallations {
 		}
 		requests
 	}
+	
+	pub fn count(&self) -> usize {
+		self.packages.len()
+	}
+	
 	pub fn perform(self) -> Vec<Result<String, Error>> {
 		let mut handles = vec![];
 		let outcomes = vec![];

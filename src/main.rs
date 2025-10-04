@@ -83,16 +83,17 @@ fn main() {
 		}
 	};
 
-	let requests = DeviceInstallations::build_requests(&devices, &packages);
+	let installs = DeviceInstallations::build_requests(&devices, &packages);
+	let total_installs = installs.iter().fold(0, |acc, e| acc + e.count());
 	let mut handles = vec![];
-	match requests.len() {
+	match installs.len() {
 		0 => {
 			eprintln!("No installation requests found.");
 			process::exit(1);
 		},
-		count => {
-			println!("Installing {count} requests...");
-			for request in requests {
+		device_count => {
+			println!("Running {total_installs} installations on {device_count} devices...");
+			for request in installs {
 				let handle = thread::spawn(move || {
 					for outcome in request.perform() {
 						match outcome {
