@@ -71,7 +71,7 @@ fn main() {
 	};
 
 	for device in &devices {
-		println!("Found device: {device}");
+		println!("Found device: {device}.");
 	}
 
 	let packages = match PackageFile::find_all(config.directory(), config.packages()) {
@@ -83,14 +83,23 @@ fn main() {
 	};
 
 	let requests = InstallationRequest::build_requests(&devices, &packages);
-	for request in requests {
-		let info = request.to_string();
-		match request.perform() {
-			Ok(_) => {
-				println!("{info} succeeded.");
-			}
-			Err(e) => {
-				println!("{info} failed with error: {e}");
+	match requests.len() {
+		0 => {
+			eprintln!("No installation requests found.");
+			process::exit(1);
+		},
+		count => {
+			println!("Installing {count} requests...");
+			for request in requests {
+				let info = request.to_string();
+				match request.perform() {
+					Ok(_) => {
+						println!("{info} succeeded. ✅");
+					}
+					Err(e) => {
+						println!("{info} failed with error: ❌{e}");
+					}
+				}
 			}
 		}
 	}

@@ -27,11 +27,7 @@ impl InstallationRequest<'_> {
 	pub fn perform(self) -> Result<(), Error> {
 		let package = self.package;
 		let path = package.path();
-		let file_name = package.file_name();
-		let package_id = package.id();
 		let device = self.device;
-		let device_name = device.name();
-		println!("Installing {package_id} ({file_name}) on {device_name}...");
 		let output = Command::new("adb")
 			.args(["-s", device.id(), "install", path])
 			.output();
@@ -44,18 +40,23 @@ impl InstallationRequest<'_> {
 
 impl Display for InstallationRequest<'_> {
 	fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-		write!(f, "Install of {} on {}", self.package.id(), self.device.name())
+		write!(
+			f,
+			"Installation of {} ({}) on {}",
+			self.package.id(),
+			self.package.file_name(),
+			self.device.name()
+		)
 	}
 }
 
 fn is_package_match(device: &Device, package: &Package) -> bool {
-	package.platforms().iter().any(|p| {
-		match package.match_file_name() {
+	package.platforms().iter()
+		.any(|p| match package.match_file_name() {
 			false => device.platform() == p,
 			true => package
 				.file_name()
 				.to_lowercase()
 				.contains(device.platform()),
-		}
-	})
+		})
 }
