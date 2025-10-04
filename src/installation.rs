@@ -18,8 +18,7 @@ impl DeviceInstallations {
 		let mut requests: Vec<DeviceInstallations> = Vec::new();
 		for device in devices {
 			let device = device.clone();
-			let matches = packages.iter()
-				.filter(|p| is_package_match(&device, p));
+			let matches = packages.iter().filter(|p| is_package_match(&device, p));
 			let mut packages = vec![];
 			for package in matches {
 				let package = package.clone();
@@ -66,7 +65,7 @@ impl DeviceInstallations {
 fn clone_outcome(r: &Result<String, Error>) -> Result<String, Error> {
 	match r {
 		Ok(o) => Ok(o.clone()),
-		Err(e) => Err(e.clone())
+		Err(e) => Err(e.clone()),
 	}
 }
 
@@ -89,14 +88,23 @@ fn perform_install(device: &Device, package: &Package) -> Result<String, Error> 
 		.output();
 	match output {
 		Ok(_) => {
-			let message = format!("Successfully installed {} ({}) on {}. ✅", 
-								  package.id(), package.file_name(), device.name());
+			let message = format!(
+				"Successfully installed {} ({}) on {}. ✅",
+				package.id(),
+				package.file_name(),
+				device.name()
+			);
 			Ok(message)
-		},
+		}
 		Err(e) => {
-			let message = format!("Failed to install {} ({}) on {}. ❌ Error: {}",
-			                       package.id(), package.file_name(), device.name(), e);
+			let message = format!(
+				"Failed to install {} ({}) on {}. ❌ Error: {}",
+				package.id(),
+				package.file_name(),
+				device.name(),
+				e
+			);
 			Err(Error::Installation(message))
-		},
+		}
 	}
 }

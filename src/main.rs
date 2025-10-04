@@ -90,7 +90,7 @@ fn main() {
 		0 => {
 			eprintln!("No installation requests found.");
 			process::exit(1);
-		},
+		}
 		device_count => {
 			println!("Running {total_installs} installations on {device_count} devices...");
 			for request in installs {
