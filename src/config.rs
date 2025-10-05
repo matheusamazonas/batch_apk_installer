@@ -36,7 +36,6 @@ pub struct Config {
 
 impl Config {
 	pub fn build(version: &str) -> Result<Config, Error> {
-		let version = parse_version(version)?;
 		let home_path = std::env::home_dir()
 			.ok_or(Error::IO(String::from("Failed to find home directory.")))?;
 		let folder_path = home_path.join(CONFIG_PATH);
@@ -59,7 +58,9 @@ impl Config {
 			}
 		};
 
-		// Version is a command-line argument, not an entry on the config file.
+		// Version is a command-line argument passed as argument to this function, not an entry
+		// on the config file. So we have to inject it.
+		let version = parse_version(version)?;
 		let version = format!("\nversion = \"{version}\"");
 		config += &version;
 		let config = toml::from_str(config.as_str())?;

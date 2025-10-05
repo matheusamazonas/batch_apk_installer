@@ -3,6 +3,7 @@ use crate::error::Error;
 use crate::installation::DeviceInstallations;
 use crate::package::PackageFile;
 use std::env;
+use std::path::PathBuf;
 use std::process;
 use std::process::{Command, Stdio};
 use std::thread;
@@ -42,10 +43,10 @@ fn main() {
 	}
 
 	let args: Vec<String> = env::args().collect();
-	if args.len() < 2 {
+	let Some(version) = args.get(1) else {
 		eprintln!("Missing arguments: version.");
 		process::exit(1);
-	}
+	};
 
 	let config = match Config::build(&args[1]) {
 		Ok(config) => config,
@@ -75,7 +76,8 @@ fn main() {
 		println!("Found device: {device}.");
 	}
 
-	let packages = match PackageFile::find_all(config.directory(), config.packages()) {
+	let packages_dir = PathBuf::from(config.directory()).join(version);
+	let packages = match PackageFile::find_all(&packages_dir, config.packages()) {
 		Ok(apks) => apks,
 		Err(e) => {
 			eprintln!("Failed to find packages: {e:?}");

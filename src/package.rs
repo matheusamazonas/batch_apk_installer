@@ -14,13 +14,12 @@ pub struct Package {
 	match_file_name: bool,
 }
 
-#[derive(Debug)]
 pub struct PackageFile {
 	path: PathBuf,
 	id: PackageID,
 }
 
-#[derive(Deserialize, Debug, Clone)]
+#[derive(Deserialize, Clone)]
 pub struct PackageConfig {
 	id: PackageID,
 	platforms: Vec<Platform>,
@@ -67,7 +66,7 @@ impl Package {
 }
 
 impl PackageFile {
-	pub fn find_all(dir: &str, configs: &[PackageConfig]) -> Result<Vec<Package>, Error> {
+	pub fn find_all(dir: &PathBuf, configs: &[PackageConfig]) -> Result<Vec<Package>, Error> {
 		fn build_package(file: PackageFile, configs: &[PackageConfig]) -> Option<Package> {
 			let config = configs.iter().find(|c| c.id == file.id)?;
 			let package = Package::try_new(file, config.platforms.clone(), config.match_file_name)?;
@@ -83,7 +82,7 @@ impl PackageFile {
 	}
 }
 
-fn find_apk_files(dir: &str) -> Result<Vec<PathBuf>, Error> {
+fn find_apk_files(dir: &PathBuf) -> Result<Vec<PathBuf>, Error> {
 	let entries = fs::read_dir(dir)?
 		.filter_map(|e| e.ok())
 		.map(|e| e.path())

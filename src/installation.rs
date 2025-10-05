@@ -11,10 +11,7 @@ pub struct DeviceInstallations {
 }
 
 impl DeviceInstallations {
-	pub fn build_requests(
-		devices: &Vec<Device>,
-		packages: &Vec<Package>,
-	) -> Vec<DeviceInstallations> {
+	pub fn build_requests(devices: &[Device], packages: &[Package]) -> Vec<DeviceInstallations> {
 		let mut requests: Vec<DeviceInstallations> = Vec::new();
 		for device in devices {
 			let device = device.clone();
