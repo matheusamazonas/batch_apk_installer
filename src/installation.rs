@@ -26,16 +26,16 @@ impl DeviceInstallations {
 		}
 		requests
 	}
-	
+
 	pub fn count(&self) -> usize {
 		self.packages.len()
 	}
-	
+
 	pub fn perform(self) -> Vec<Result<String, Error>> {
 		let mut handles = vec![];
 		let outcomes = vec![];
 		let outcomes = Arc::new(Mutex::new(outcomes));
-		
+
 		for package in self.packages {
 			let package = package.clone();
 			let device = self.device.clone();
@@ -43,17 +43,17 @@ impl DeviceInstallations {
 			let handle = thread::spawn(move || {
 				let outcome = perform_install(&device, &package);
 				match outcomes.lock() {
-				    Ok(mut outcomes) => outcomes.push(outcome),
+					Ok(mut outcomes) => outcomes.push(outcome),
 					Err(e) => eprintln!("Failed to acquire lock when performing install: {:?}", e),
 				}
 			});
 			handles.push(handle);
 		}
-		
+
 		for handle in handles {
 			handle.join().unwrap();
 		}
-		
+
 		// It's fine to unwrap here because all threads have joined.
 		outcomes.lock().unwrap().iter().map(clone_outcome).collect()
 	}
@@ -84,7 +84,7 @@ fn perform_install(device: &Device, package: &Package) -> Result<String, Error> 
 		.args(["-s", device.id(), "install", path])
 		.output();
 	match output {
-		Ok(_) => {
+		Ok(output) if output.stderr.is_empty() => {
 			let message = format!(
 				"Successfully installed {} ({}) on {}. ✅",
 				package.id(),
@@ -92,6 +92,21 @@ fn perform_install(device: &Device, package: &Package) -> Result<String, Error> 
 				device.name()
 			);
 			Ok(message)
+		}
+		Ok(output) => {
+			let error = String::from_utf8_lossy(&output.stderr);
+			let mut message = format!(
+				"Failed to install {} ({}) on {}. ❌ ",
+				package.id(),
+				package.file_name(),
+				device.name()
+			);
+			let body = match error.contains("INSTALL_FAILED_UPDATE_INCOMPATIBLE") {
+				true => String::from("Signatures don't match."),
+				false => format!("Error: {}", error),
+			};
+			message.push_str(&body);
+			Err(Error::Installation(message))
 		}
 		Err(e) => {
 			let message = format!(
