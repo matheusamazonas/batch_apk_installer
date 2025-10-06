@@ -22,6 +22,7 @@ match_file_name = false
 id = "com.company.product.pico_only_app"
 platforms = [ "pico" ]
 match_file_name = true
+
 [[packages]]
 id = "com.company.product.quest_only_app"
 platforms = [ "pico" ]
