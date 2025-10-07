@@ -6,7 +6,7 @@ use std::env;
 use std::path::PathBuf;
 use std::process;
 use std::process::{Command, Stdio};
-use std::thread;
+use futures::future;
 
 mod config;
 mod device;
@@ -31,7 +31,8 @@ fn command_exists(command: &str, args: &str) -> bool {
 		.is_ok()
 }
 
-fn main() {
+#[tokio::main]
+async fn main() {
 	if !has_adb() {
 		eprintln!("ADB not found. Please ensure that ADB is installed.");
 		process::exit(1)
@@ -86,29 +87,22 @@ fn main() {
 	};
 
 	let installs = DeviceInstallations::build_requests(&devices, &packages);
-	let total_installs = installs.iter().fold(0, |acc, e| acc + e.count());
-	let mut handles = vec![];
 	match installs.len() {
 		0 => {
 			eprintln!("No installation requests found.");
 			process::exit(1);
 		}
 		device_count => {
+			let total_installs = installs.iter().fold(0, |acc, e| acc + e.count());
 			println!("Running {total_installs} installations on {device_count} devices...");
-			for request in installs {
-				let handle = thread::spawn(move || {
-					for outcome in request.perform() {
-						match outcome {
-							Ok(o) => println!("{o}"),
-							Err(e) => eprintln!("{e}"),
-						}
+			let tasks = installs.into_iter().map(|i| i.perform());
+			for outcomes in future::join_all(tasks).await {
+				for outcome in outcomes {
+					match outcome {
+						Ok(o) => println!("{o}"),
+						Err(e) => eprintln!("{e}"),
 					}
-				});
-				handles.push(handle);
-			}
-
-			for handle in handles {
-				handle.join().unwrap();
+				}
 			}
 		}
 	}

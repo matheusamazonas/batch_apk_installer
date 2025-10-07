@@ -1,9 +1,7 @@
 use crate::device::Device;
 use crate::error::Error;
 use crate::package::Package;
-use std::process::Command;
-use std::sync::{Arc, Mutex};
-use std::thread;
+use futures::future;
 
 pub struct DeviceInstallations {
 	device: Device,
@@ -31,38 +29,11 @@ impl DeviceInstallations {
 		self.packages.len()
 	}
 
-	pub fn perform(self) -> Vec<Result<String, Error>> {
-		let mut handles = vec![];
-		let outcomes = vec![];
-		let outcomes = Arc::new(Mutex::new(outcomes));
+	pub async fn perform(self) -> Vec<Result<String, Error>> {
+		let outcomes = self.packages.iter()
+			.map(|p| perform_install(&self.device, &p));
 
-		for package in self.packages {
-			let package = package.clone();
-			let device = self.device.clone();
-			let outcomes = outcomes.clone();
-			let handle = thread::spawn(move || {
-				let outcome = perform_install(&device, &package);
-				match outcomes.lock() {
-					Ok(mut outcomes) => outcomes.push(outcome),
-					Err(e) => eprintln!("Failed to acquire lock when performing install: {:?}", e),
-				}
-			});
-			handles.push(handle);
-		}
-
-		for handle in handles {
-			handle.join().unwrap();
-		}
-
-		// It's fine to unwrap here because all threads have joined.
-		outcomes.lock().unwrap().iter().map(clone_outcome).collect()
-	}
-}
-
-fn clone_outcome(r: &Result<String, Error>) -> Result<String, Error> {
-	match r {
-		Ok(o) => Ok(o.clone()),
-		Err(e) => Err(e.clone()),
+		future::join_all(outcomes).await
 	}
 }
 
@@ -78,12 +49,12 @@ fn is_package_match(device: &Device, package: &Package) -> bool {
 		})
 }
 
-fn perform_install(device: &Device, package: &Package) -> Result<String, Error> {
+async fn perform_install(device: &Device, package: &Package) -> Result<String, Error> {
 	let path = package.path();
-	let output = Command::new("adb")
+	let output = tokio::process::Command::new("adb")
 		.args(["-s", device.id(), "install", path])
 		.output();
-	match output {
+	match output.await {
 		Ok(output) if output.stderr.is_empty() => {
 			let message = format!(
 				"Successfully installed {} ({}) on {}. ✅",
