@@ -19,7 +19,7 @@ pub struct PackageFile {
 	id: PackageID,
 }
 
-#[derive(Deserialize, Clone)]
+#[derive(Deserialize)]
 pub struct PackageConfig {
 	id: PackageID,
 	platforms: Vec<Platform>,

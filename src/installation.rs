@@ -1,7 +1,8 @@
 use crate::device::Device;
 use crate::error::Error;
 use crate::package::Package;
-use futures::future;
+use tokio::sync::mpsc;
+use tokio_stream::wrappers::ReceiverStream;
 
 pub struct DeviceInstallations {
 	device: Device,
@@ -29,11 +30,18 @@ impl DeviceInstallations {
 		self.packages.len()
 	}
 
-	pub async fn perform(self) -> Vec<Result<String, Error>> {
-		let outcomes = self.packages.iter()
-			.map(|p| perform_install(&self.device, &p));
+	pub fn perform(self) -> ReceiverStream<Result<String, Error>> {
+		let (tx, rx) = mpsc::channel(self.packages.len());
+		for package in self.packages {
+			let device = self.device.clone();
+			let tx = tx.clone();
+			tokio::task::spawn(async move {
+				let outcome = perform_install(&device, &package).await;
+				tx.send(outcome).await.expect("Error sending outcome.");
+			});
+		}
 
-		future::join_all(outcomes).await
+		ReceiverStream::new(rx)
 	}
 }
 

@@ -2,11 +2,11 @@ use crate::config::Config;
 use crate::error::Error;
 use crate::installation::DeviceInstallations;
 use crate::package::PackageFile;
+use futures::{StreamExt, stream};
 use std::env;
 use std::path::PathBuf;
 use std::process;
 use std::process::{Command, Stdio};
-use futures::future;
 
 mod config;
 mod device;
@@ -95,13 +95,12 @@ async fn main() {
 		device_count => {
 			let total_installs = installs.iter().fold(0, |acc, e| acc + e.count());
 			println!("Running {total_installs} installations on {device_count} devices...");
-			let tasks = installs.into_iter().map(|i| i.perform());
-			for outcomes in future::join_all(tasks).await {
-				for outcome in outcomes {
-					match outcome {
-						Ok(o) => println!("{o}"),
-						Err(e) => eprintln!("{e}"),
-					}
+			let streams = installs.into_iter().map(|i| i.perform());
+			let mut stream = stream::select_all(streams);
+			while let Some(outcome) = stream.next().await {
+				match outcome {
+					Ok(o) => println!("{o}"),
+					Err(e) => eprintln!("{e}"),
 				}
 			}
 		}
