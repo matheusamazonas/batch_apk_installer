@@ -80,9 +80,10 @@ async fn perform_install(device: &Device, package: &Package) -> Result<String, E
 				package.file_name(),
 				device.name()
 			);
-			let body = match error.contains("INSTALL_FAILED_UPDATE_INCOMPATIBLE") {
-				true => String::from("Signatures don't match."),
-				false => format!("Error: {}", error),
+			let body = if error.contains("INSTALL_FAILED_UPDATE_INCOMPATIBLE") {
+				String::from("Signatures don't match.")
+			} else {
+				format!("Error: {error}")
 			};
 			message.push_str(&body);
 			Err(Error::Installation(message))

@@ -53,7 +53,7 @@ pub fn get_devices(platforms: &[Platform]) -> Result<Vec<Device>, Error> {
 fn parse_device(line: &str, platforms: &[Platform]) -> Option<Device> {
 	let (id, platform) = parse_device_info(line, platforms)?;
 	let name = get_device_name(&id).ok()?;
-	let device = Device { id, name, platform };
+	let device = Device { name, id, platform };
 	Some(device)
 }
 

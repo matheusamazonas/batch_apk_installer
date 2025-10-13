@@ -16,12 +16,12 @@ pub enum Error {
 impl Display for Error {
 	fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
 		match self {
-			Error::IO(e) => write!(f, "IO Error: {}", e),
-			Error::Parsing(e) => write!(f, "Parsing Error: {}", e),
-			Error::Device(e) => write!(f, "Device Error: {}", e),
-			Error::Package(e) => write!(f, "Package Error: {}", e),
-			Error::Config(e) => write!(f, "Config Error: {}", e),
-			Error::Installation(e) => write!(f, "Installation Error: {}", e),
+			Error::IO(e) => write!(f, "IO Error: {e}"),
+			Error::Parsing(e) => write!(f, "Parsing Error: {e}"),
+			Error::Device(e) => write!(f, "Device Error: {e}"),
+			Error::Package(e) => write!(f, "Package Error: {e}"),
+			Error::Config(e) => write!(f, "Config Error: {e}"),
+			Error::Installation(e) => write!(f, "Installation Error: {e}"),
 		}
 	}
 }

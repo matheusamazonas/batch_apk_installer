@@ -84,7 +84,7 @@ impl PackageFile {
 
 fn find_apk_files(dir: &PathBuf) -> Result<Vec<PathBuf>, Error> {
 	let entries = fs::read_dir(dir)?
-		.filter_map(|e| e.ok())
+		.filter_map(Result::ok)
 		.map(|e| e.path())
 		.filter(|path| path.extension().is_some_and(|ext| ext == "apk"))
 		.collect();

@@ -41,22 +41,17 @@ impl Config {
 			.ok_or(Error::IO(String::from("Failed to find home directory.")))?;
 		let folder_path = home_path.join(CONFIG_PATH);
 		let file_path = folder_path.join(CONFIG_FILE);
-		let mut config = match fs::read_to_string(&file_path) {
-			Ok(file) => file,
-			Err(_) => {
-				if !fs::exists(&folder_path)? {
-					fs::create_dir_all(&folder_path)?;
-				}
-				let mut file = File::create(&file_path)?;
-				file.write_all(CONFIG_TEMPLATE.as_bytes())?;
-				let file_path = file_path.to_str().ok_or(Error::Config(String::from(
-					"Config file path is not Unicode.",
-				)))?;
-				println!(
-					"Config file not found. Created one at {file_path}. Modify it and try again"
-				);
-				return Err(Error::Config(String::from("Config file not found.")));
+		let Ok(mut config) = fs::read_to_string(&file_path) else {
+			if !fs::exists(&folder_path)? {
+				fs::create_dir_all(&folder_path)?;
 			}
+			let mut file = File::create(&file_path)?;
+			file.write_all(CONFIG_TEMPLATE.as_bytes())?;
+			let file_path = file_path.to_str().ok_or(Error::Config(String::from(
+				"Config file path is not Unicode.",
+			)))?;
+			println!("Config file not found. Created one at {file_path}. Modify it and try again");
+			return Err(Error::Config(String::from("Config file not found.")));
 		};
 
 		// Version is a command-line argument passed as argument to this function, not an entry

@@ -95,7 +95,7 @@ async fn main() {
 		device_count => {
 			let total_installs = installs.iter().fold(0, |acc, e| acc + e.count());
 			println!("Running {total_installs} installations on {device_count} devices...");
-			let streams = installs.into_iter().map(|i| i.perform());
+			let streams = installs.into_iter().map(DeviceInstallations::perform);
 			let mut stream = stream::select_all(streams);
 			while let Some(outcome) = stream.next().await {
 				match outcome {
