@@ -27,9 +27,7 @@ pub struct PackageConfig {
 
 impl Package {
 	pub fn try_new(
-		file: PackageFile,
-		platforms: Vec<Platform>,
-		match_file_name: bool,
+		file: PackageFile, platforms: Vec<Platform>, match_file_name: bool,
 	) -> Option<Package> {
 		let file_name = file.path.file_name()?.to_str()?.to_string();
 		let path = file.path.into_os_string().into_string().ok()?;
