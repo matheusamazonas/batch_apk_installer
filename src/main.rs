@@ -7,6 +7,7 @@ use std::env;
 use std::path::PathBuf;
 use std::process;
 use std::process::{Command, Stdio};
+use std::sync::Arc;
 
 mod config;
 mod device;
@@ -61,8 +62,8 @@ async fn main() {
 		}
 	};
 
-	let devices = match device::get_devices(config.platforms()) {
-		Ok(devices) if !devices.is_empty() => devices,
+	let devices: Vec<_> = match device::get_devices(config.platforms()) {
+		Ok(devices) if !devices.is_empty() => devices.into_iter().map(Arc::new).collect(),
 		Ok(_) => {
 			eprintln!("No devices were found.");
 			process::exit(1)
@@ -78,8 +79,8 @@ async fn main() {
 	}
 
 	let packages_dir = PathBuf::from(config.directory()).join(version);
-	let packages = match PackageFile::find_all(&packages_dir, config.packages()) {
-		Ok(apks) => apks,
+	let packages: Vec<_> = match PackageFile::find_all(&packages_dir, config.packages()) {
+		Ok(packages) => packages.into_iter().map(Arc::new).collect(),
 		Err(e) => {
 			eprintln!("Failed to find packages: {e:?}");
 			process::exit(1);

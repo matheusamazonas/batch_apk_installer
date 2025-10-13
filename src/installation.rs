@@ -1,25 +1,28 @@
 use crate::device::Device;
 use crate::error::Error;
 use crate::package::Package;
+use std::sync::Arc;
 use tokio::sync::mpsc;
 use tokio_stream::wrappers::ReceiverStream;
 
 pub struct DeviceInstallations {
-	device: Device,
-	packages: Vec<Package>,
+	device: Arc<Device>,
+	packages: Vec<Arc<Package>>,
 }
 
 impl DeviceInstallations {
-	pub fn build_requests(devices: &[Device], packages: &[Package]) -> Vec<DeviceInstallations> {
+	pub fn build_requests(
+		devices: &[Arc<Device>], packages: &[Arc<Package>],
+	) -> Vec<DeviceInstallations> {
 		let mut requests: Vec<DeviceInstallations> = Vec::new();
 		for device in devices {
-			let device = device.clone();
 			let matches = packages.iter().filter(|p| is_package_match(&device, p));
 			let mut packages = vec![];
 			for package in matches {
 				let package = package.clone();
 				packages.push(package);
 			}
+			let device = device.clone();
 			let request = DeviceInstallations { device, packages };
 			requests.push(request);
 		}

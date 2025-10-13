@@ -4,7 +4,6 @@ use regex::Regex;
 use std::fmt::Display;
 use std::process::Command;
 
-#[derive(Clone)]
 pub struct Device {
 	name: String,
 	id: String,

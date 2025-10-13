@@ -5,7 +5,6 @@ use std::fs;
 use std::path::PathBuf;
 use std::process::Command;
 
-#[derive(Clone)]
 pub struct Package {
 	id: PackageID,
 	path: String,
