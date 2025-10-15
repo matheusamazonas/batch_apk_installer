@@ -10,6 +10,21 @@ pub struct DeviceInstallations {
 	packages: Vec<Arc<Package>>,
 }
 
+pub struct InstallationOutcome {
+	description: String,
+	error: Option<Error>,
+}
+
+impl InstallationOutcome {
+	pub fn description(&self) -> &String {
+		&self.description
+	}
+	
+	pub fn error(&self) -> &Option<Error> {
+		&self.error
+	}
+}
+
 impl DeviceInstallations {
 	pub fn build_requests(
 		devices: &[Arc<Device>], packages: &[Arc<Package>],
@@ -33,7 +48,7 @@ impl DeviceInstallations {
 		self.packages.len()
 	}
 
-	pub fn perform(self) -> ReceiverStream<Result<String, Error>> {
+	pub fn perform(self) -> ReceiverStream<InstallationOutcome> {
 		let (tx, rx) = mpsc::channel(self.packages.len());
 		for package in self.packages {
 			let device = self.device.clone();
@@ -60,46 +75,25 @@ fn is_package_match(device: &Device, package: &Package) -> bool {
 		})
 }
 
-async fn perform_install(device: &Device, package: &Package) -> Result<String, Error> {
+async fn perform_install(device: &Device, package: &Package) -> InstallationOutcome {
 	let path = package.path();
 	let output = tokio::process::Command::new("adb")
 		.args(["-s", device.id(), "install", path])
 		.output();
-	match output.await {
-		Ok(output) if output.stderr.is_empty() => {
-			let message = format!(
-				"Successfully installed {} ({}) on {}. ✅",
-				package.id(),
-				package.file_name(),
-				device.name()
-			);
-			Ok(message)
-		}
+	let description = format!("Installation of {} on {}", package.id(), device.name());
+	let error = match output.await {
+		Ok(output) if output.stderr.is_empty() => None, // Success
 		Ok(output) => {
 			let error = String::from_utf8_lossy(&output.stderr);
-			let mut message = format!(
-				"Failed to install {} ({}) on {}. ❌ ",
-				package.id(),
-				package.file_name(),
-				device.name()
-			);
-			let body = if error.contains("INSTALL_FAILED_UPDATE_INCOMPATIBLE") {
-				String::from("Signatures don't match.")
+			if error.contains("INSTALL_FAILED_UPDATE_INCOMPATIBLE") {
+				Some(Error::PackageSignatureMismatch)
+			} else if error.contains("INSTALL_FAILED_VERSION_DOWNGRADE") {
+				Some(Error::PackageDowngrade)
 			} else {
-				format!("Error: {error}")
-			};
-			message.push_str(&body);
-			Err(Error::Installation(message))
+				Some(Error::Installation(String::from(error)))
+			}
 		}
-		Err(e) => {
-			let message = format!(
-				"Failed to install {} ({}) on {}. ❌ Error: {}",
-				package.id(),
-				package.file_name(),
-				device.name(),
-				e
-			);
-			Err(Error::Installation(message))
-		}
-	}
+		Err(e) => Some(Error::Installation(e.to_string())),
+	};
+	InstallationOutcome { description, error }
 }

@@ -6,22 +6,34 @@ use string::FromUtf8Error;
 #[derive(Debug, PartialEq, Clone)]
 pub enum Error {
 	IO(String),
+	NoHomeDirectory,
 	Parsing(String),
-	Device(String),
-	Package(String),
-	Config(String),
+	NoDeviceName,
+	DevicesFetching,
+	MalformedPackageFilePath,
+	PackageNameNotFound,
+	ConfigNotFound,
+	InvalidConfigPath,
 	Installation(String),
+	PackageSignatureMismatch,
+	PackageDowngrade,
 }
 
 impl Display for Error {
 	fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
 		match self {
 			Error::IO(e) => write!(f, "IO Error: {e}"),
+			Error::NoHomeDirectory => write!(f, "No home directory found"),
 			Error::Parsing(e) => write!(f, "Parsing Error: {e}"),
-			Error::Device(e) => write!(f, "Device Error: {e}"),
-			Error::Package(e) => write!(f, "Package Error: {e}"),
-			Error::Config(e) => write!(f, "Config Error: {e}"),
+			Error::NoDeviceName => write!(f, "No device name provided"),
+			Error::DevicesFetching => write!(f, "Failed to fetch devices"),
+			Error::MalformedPackageFilePath => write!(f, "Package file path is not valid"),
+			Error::PackageNameNotFound => write!(f, "Failed to fetch package name"),
+			Error::ConfigNotFound => write!(f, "Config file not found"),
+			Error::InvalidConfigPath => write!(f, "Invalid config path"),
 			Error::Installation(e) => write!(f, "Installation Error: {e}"),
+			Error::PackageSignatureMismatch => write!(f, "APK signature mismatch"),
+			Error::PackageDowngrade => write!(f, "Package downgrade"),
 		}
 	}
 }

@@ -37,8 +37,7 @@ pub struct Config {
 
 impl Config {
 	pub fn build(version: &str) -> Result<Config, Error> {
-		let home_path = std::env::home_dir()
-			.ok_or(Error::IO(String::from("Failed to find home directory.")))?;
+		let home_path = std::env::home_dir().ok_or(Error::NoHomeDirectory)?;
 		let folder_path = home_path.join(CONFIG_PATH);
 		let file_path = folder_path.join(CONFIG_FILE);
 		let Ok(mut config) = fs::read_to_string(&file_path) else {
@@ -47,11 +46,9 @@ impl Config {
 			}
 			let mut file = File::create(&file_path)?;
 			file.write_all(CONFIG_TEMPLATE.as_bytes())?;
-			let file_path = file_path.to_str().ok_or(Error::Config(String::from(
-				"Config file path is not Unicode.",
-			)))?;
+			let file_path = file_path.to_str().ok_or(Error::InvalidConfigPath)?;
 			println!("Config file not found. Created one at {file_path}. Modify it and try again");
-			return Err(Error::Config(String::from("Config file not found.")));
+			return Err(Error::ConfigNotFound);
 		};
 
 		// Version is a command-line argument passed as argument to this function, not an entry

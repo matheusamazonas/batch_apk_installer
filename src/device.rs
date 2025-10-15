@@ -36,9 +36,7 @@ pub fn get_devices(platforms: &[Platform]) -> Result<Vec<Device>, Error> {
 	let header_line_ix = output
 		.lines()
 		.position(|l| l.contains("List of devices attached"))
-		.ok_or(Error::Device(String::from(
-			"Failed to fetch Android devices.",
-		)))?;
+		.ok_or(Error::DevicesFetching)?;
 
 	let devices = output
 		.lines()
@@ -78,7 +76,7 @@ fn get_device_name(id: &str) -> Result<String, Error> {
 		.output()?;
 	let name = String::from_utf8(output.stdout)?;
 	match name.len() {
-		0 => Err(Error::Device(String::from("No device name provided."))),
+		0 => Err(Error::NoDeviceName),
 		_ => Ok(String::from(name.trim_end())),
 	}
 }

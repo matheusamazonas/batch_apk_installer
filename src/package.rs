@@ -89,9 +89,7 @@ fn find_apk_files(dir: &PathBuf) -> Result<Vec<PathBuf>, Error> {
 }
 
 fn get_package_file(path: &PathBuf) -> Result<PackageFile, Error> {
-	let path_str = path
-		.to_str()
-		.ok_or(Error::Package(String::from("Failed to get file path.")))?;
+	let path_str = path.to_str().ok_or(Error::MalformedPackageFilePath)?;
 	let output = Command::new("aapt2")
 		.args(["dump", "packagename", path_str])
 		.output()?;
@@ -102,8 +100,6 @@ fn get_package_file(path: &PathBuf) -> Result<PackageFile, Error> {
 		let package = PackageFile { path, id };
 		Ok(package)
 	} else {
-		Err(Error::Package(String::from(
-			"Failed to get APK package name.",
-		)))
+		Err(Error::PackageNameNotFound)
 	}
 }
