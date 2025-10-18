@@ -75,25 +75,66 @@ fn is_package_match(device: &Device, package: &Package) -> bool {
 		})
 }
 
+fn parse_installation_error(error: &[u8]) -> Error {
+	let error = String::from_utf8_lossy(error);
+	if error.contains("INSTALL_FAILED_UPDATE_INCOMPATIBLE") {
+		Error::PackageSignatureMismatch
+	} else if error.contains("INSTALL_FAILED_VERSION_DOWNGRADE") {
+		Error::PackageDowngrade
+	} else {
+		Error::Installation(String::from(error))
+	}
+}
+
 async fn perform_install(device: &Device, package: &Package) -> InstallationOutcome {
 	let path = package.path();
 	let output = tokio::process::Command::new("adb")
 		.args(["-s", device.id(), "install", path])
 		.output();
-	let description = format!("Installation of {} on {}", package.id(), device.name());
 	let error = match output.await {
 		Ok(output) if output.stderr.is_empty() => None, // Success
 		Ok(output) => {
-			let error = String::from_utf8_lossy(&output.stderr);
-			if error.contains("INSTALL_FAILED_UPDATE_INCOMPATIBLE") {
-				Some(Error::PackageSignatureMismatch)
-			} else if error.contains("INSTALL_FAILED_VERSION_DOWNGRADE") {
-				Some(Error::PackageDowngrade)
-			} else {
-				Some(Error::Installation(String::from(error)))
-			}
+			let error = parse_installation_error(&output.stderr);
+			Some(error)
 		}
 		Err(e) => Some(Error::Installation(e.to_string())),
 	};
+	let description = format!("Installation of {} on {}", package.id(), device.name());
 	InstallationOutcome { description, error }
+}
+
+#[cfg(test)]
+mod tests {
+	use super::*;
+
+	#[test]
+	fn parse_signature_mismatch_error() {
+		let error = "adb: failed to install airhockey.apk: Failure \
+		[INSTALL_FAILED_UPDATE_INCOMPATIBLE: Package com.lazysquirrellabs.airhockey signatures \
+		do not match previously installed version; ignoring!]";
+		assert_eq!(
+			parse_installation_error(error.as_bytes()),
+			Error::PackageSignatureMismatch
+		);
+	}
+
+	#[test]
+	fn parse_downgrade_error() {
+		let error = "adb: failed to install 5.1/CorpusVR-5.1-5010001-Dashboard.apk: \
+		Failure [INSTALL_FAILED_VERSION_DOWNGRADE]";
+		assert_eq!(
+			parse_installation_error(error.as_bytes()),
+			Error::PackageDowngrade
+		);
+	}
+	
+	#[test]
+	fn parse_generic_error() {
+		// Sometimes ADB throws errors without no content, just a header, like the one below.
+		let error = "adb: failed to install 5.1/CorpusVR-5.1-5010001-Dashboard.apk:\n";
+		assert_eq!(
+			parse_installation_error(error.as_bytes()),
+			Error::Installation(String::from(error))
+		);
+	}
 }
