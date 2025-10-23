@@ -53,7 +53,7 @@ async fn main() {
 		process::exit(1);
 	};
 
-	let config = match Config::build(&args[1]) {
+	let config = match Config::build() {
 		Ok(config) => config,
 		Err(e) => {
 			let message = format!("Error when loading config: {e}.");

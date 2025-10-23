@@ -36,11 +36,11 @@ pub struct Config {
 }
 
 impl Config {
-	pub fn build(version: &str) -> Result<Config, Error> {
+	pub fn build() -> Result<Config, Error> {
 		let home_path = std::env::home_dir().ok_or(Error::NoHomeDirectory)?;
 		let folder_path = home_path.join(CONFIG_PATH);
 		let file_path = folder_path.join(CONFIG_FILE);
-		let Ok(mut config) = fs::read_to_string(&file_path) else {
+		let Ok(config) = fs::read_to_string(&file_path) else {
 			if !fs::exists(&folder_path)? {
 				fs::create_dir_all(&folder_path)?;
 			}
@@ -50,12 +50,7 @@ impl Config {
 			println!("Config file not found. Created one at {file_path}. Modify it and try again");
 			return Err(Error::ConfigNotFound);
 		};
-
-		// Version is a command-line argument passed as argument to this function, not an entry
-		// on the config file. So we have to inject it.
-		let version = parse_version(version)?;
-		let version = format!("\nversion = \"{version}\"");
-		config += &version;
+		
 		let config = toml::from_str(config.as_str())?;
 		Ok(config)
 	}
