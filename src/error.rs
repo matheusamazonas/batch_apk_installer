@@ -17,6 +17,7 @@ pub enum Error {
 	Installation(String),
 	PackageSignatureMismatch,
 	PackageDowngrade,
+	Uninstall(String),
 }
 
 impl Display for Error {
@@ -31,9 +32,10 @@ impl Display for Error {
 			Error::PackageNameNotFound => write!(f, "Failed to fetch package name"),
 			Error::ConfigNotFound => write!(f, "Config file not found"),
 			Error::InvalidConfigPath => write!(f, "Invalid config path"),
-			Error::Installation(e) => write!(f, "Installation Error: {e}"),
+			Error::Installation(e) => write!(f, "Installation error: {e}"),
 			Error::PackageSignatureMismatch => write!(f, "APK signature mismatch"),
 			Error::PackageDowngrade => write!(f, "Package downgrade"),
+			Error::Uninstall(e) => write!(f, "Uninstall failed: {e}"),
 		}
 	}
 }

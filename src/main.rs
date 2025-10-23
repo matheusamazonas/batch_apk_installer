@@ -53,6 +53,11 @@ async fn main() {
 		process::exit(1);
 	};
 
+	let uninstall = match args.get(2) {
+		Some(arg) => arg == "-u",
+		None => false,
+	};
+
 	let config = match Config::build() {
 		Ok(config) => config,
 		Err(e) => {
@@ -89,7 +94,7 @@ async fn main() {
 		}
 	};
 
-	let installs = DeviceInstallations::build_requests(&devices, &packages);
+	let installs = DeviceInstallations::build_requests(&devices, &packages, uninstall);
 	match installs.len() {
 		0 => {
 			print_error("No installation requests found.");

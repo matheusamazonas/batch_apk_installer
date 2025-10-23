@@ -50,7 +50,7 @@ impl Config {
 			println!("Config file not found. Created one at {file_path}. Modify it and try again");
 			return Err(Error::ConfigNotFound);
 		};
-		
+
 		let config = toml::from_str(config.as_str())?;
 		Ok(config)
 	}

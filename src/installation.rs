@@ -1,5 +1,6 @@
 use crate::device::Device;
 use crate::error::Error;
+use crate::error::Error::Uninstall;
 use crate::package::Package;
 use std::sync::Arc;
 use tokio::sync::mpsc;
@@ -8,18 +9,19 @@ use tokio_stream::wrappers::ReceiverStream;
 pub struct DeviceInstallations {
 	device: Arc<Device>,
 	packages: Vec<Arc<Package>>,
+	uninstall_first: bool,
 }
 
-pub struct InstallationOutcome {
+pub struct CommandOutcome {
 	description: String,
 	error: Option<Error>,
 }
 
-impl InstallationOutcome {
+impl CommandOutcome {
 	pub fn description(&self) -> &String {
 		&self.description
 	}
-	
+
 	pub fn error(&self) -> &Option<Error> {
 		&self.error
 	}
@@ -27,7 +29,7 @@ impl InstallationOutcome {
 
 impl DeviceInstallations {
 	pub fn build_requests(
-		devices: &[Arc<Device>], packages: &[Arc<Package>],
+		devices: &[Arc<Device>], packages: &[Arc<Package>], uninstall_first: bool,
 	) -> Vec<DeviceInstallations> {
 		let mut requests: Vec<DeviceInstallations> = Vec::new();
 		for device in devices {
@@ -38,8 +40,7 @@ impl DeviceInstallations {
 				packages.push(package);
 			}
 			let device = device.clone();
-			let request = DeviceInstallations { device, packages };
-			requests.push(request);
+			requests.push(DeviceInstallations { device, packages, uninstall_first});
 		}
 		requests
 	}
@@ -48,17 +49,20 @@ impl DeviceInstallations {
 		self.packages.len()
 	}
 
-	pub fn perform(self) -> ReceiverStream<InstallationOutcome> {
+	pub fn perform(self) -> ReceiverStream<CommandOutcome> {
 		let (tx, rx) = mpsc::channel(self.packages.len());
 		for package in self.packages {
 			let device = self.device.clone();
 			let tx = tx.clone();
 			tokio::task::spawn(async move {
-				let outcome = perform_install(&device, &package).await;
-				tx.send(outcome).await.expect("Error sending outcome.");
+				if self.uninstall_first {
+					let uninstall_outcome = perform_uninstall(&device, &package).await;
+					tx.send(uninstall_outcome).await.expect("Error sending operation outcome.");
+				}
+				let install_outcome = perform_install(&device, &package).await;
+				tx.send(install_outcome).await.expect("Error sending operation outcome.");
 			});
 		}
-
 		ReceiverStream::new(rx)
 	}
 }
@@ -86,7 +90,31 @@ fn parse_installation_error(error: &[u8]) -> Error {
 	}
 }
 
-async fn perform_install(device: &Device, package: &Package) -> InstallationOutcome {
+async fn perform_uninstall(device: &Device, package: &Package) -> CommandOutcome {
+	let description = format!("Uninstallation of {} on {}", package.id(), device.name());
+	let output = tokio::process::Command::new("adb")
+		.args(["-s", device.id(), "uninstall", package.id()])
+		.output();
+	match output.await {
+		Ok(output) if output.status.success() => CommandOutcome {
+			description,
+			error: None,
+		},
+		Ok(output) => {
+			let message = String::from_utf8_lossy(&output.stderr);
+			CommandOutcome {
+				description,
+				error: Some(Uninstall(message.to_string())),
+			}
+		}
+		Err(e) => CommandOutcome {
+			description,
+			error: Some(Uninstall(e.to_string())),
+		},
+	}
+}
+
+async fn perform_install(device: &Device, package: &Package) -> CommandOutcome {
 	let path = package.path();
 	let output = tokio::process::Command::new("adb")
 		.args(["-s", device.id(), "install", path])
@@ -100,7 +128,7 @@ async fn perform_install(device: &Device, package: &Package) -> InstallationOutc
 		Err(e) => Some(Error::Installation(e.to_string())),
 	};
 	let description = format!("Installation of {} on {}", package.id(), device.name());
-	InstallationOutcome { description, error }
+	CommandOutcome { description, error }
 }
 
 #[cfg(test)]
@@ -127,7 +155,7 @@ mod tests {
 			Error::PackageDowngrade
 		);
 	}
-	
+
 	#[test]
 	fn parse_generic_error() {
 		// Sometimes ADB throws errors without no content, just a header, like the one below.
