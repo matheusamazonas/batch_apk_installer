@@ -67,8 +67,7 @@ async fn main() {
 	let (version, uninstall) = match get_parameters(args)  {
 		Ok((version, uninstall)) => (version, uninstall),
 		Err(e) => {
-			let error_message = e.to_string();
-			print_error(&error_message);
+			print_error(&e.to_string());
 			process::exit(1);
 		}
 	};
@@ -100,11 +99,10 @@ async fn main() {
 	}
 
 	let packages_dir = PathBuf::from(config.directory()).join(version);
-	let packages: Vec<_> = match PackageFile::find_all(&packages_dir, config.packages()) {
+	let packages: Vec<_> = match package::find_all_packages(&packages_dir, config.packages()) {
 		Ok(packages) => packages.into_iter().map(Arc::new).collect(),
 		Err(e) => {
-			let message = format!("Failed to find packages: {e}.");
-			print_error(&message);
+			print_error(&e.to_string());
 			process::exit(1);
 		}
 	};

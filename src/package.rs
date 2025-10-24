@@ -62,20 +62,26 @@ impl Package {
 	}
 }
 
-impl PackageFile {
-	pub fn find_all(dir: &PathBuf, configs: &[PackageConfig]) -> Result<Vec<Package>, Error> {
-		fn build_package(file: PackageFile, configs: &[PackageConfig]) -> Option<Package> {
-			let config = configs.iter().find(|c| c.id == file.id)?;
-			let package = Package::try_new(file, config.platforms.clone(), config.match_file_name)?;
-			Some(package)
-		}
+pub fn find_all_packages(dir: &PathBuf, configs: &[PackageConfig]) -> Result<Vec<Package>, Error> {
+	fn build_package(file: PackageFile, configs: &[PackageConfig]) -> Option<Package> {
+		let config = configs.iter().find(|c| c.id == file.id)?;
+		let package = Package::try_new(file, config.platforms.clone(), config.match_file_name)?;
+		Some(package)
+	}
 
-		let files = find_apk_files(dir)?
-			.into_iter()
-			.filter_map(|f| get_package_file(&f).ok())
-			.filter_map(|f| build_package(f, configs))
-			.collect();
-		Ok(files)
+	match fs::exists(dir) {
+		Ok(true) => {
+			let files = find_apk_files(dir)?
+				.into_iter()
+				.filter_map(|f| get_package_file(&f).ok())
+				.filter_map(|f| build_package(f, configs))
+				.collect();
+			Ok(files)
+		},
+		_ => {
+			let path = dir.to_string_lossy().to_string();
+			Err(Error::NoPackageDirectory(path))
+		}
 	}
 }
 
