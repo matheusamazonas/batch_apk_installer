@@ -57,10 +57,14 @@ impl DeviceInstallations {
 			tokio::task::spawn(async move {
 				if self.uninstall_first {
 					let uninstall_outcome = perform_uninstall(&device, &package).await;
-					tx.send(uninstall_outcome).await.expect("Error sending operation outcome.");
+					tx.send(uninstall_outcome)
+						.await
+						.expect("Error sending operation outcome.");
 				}
 				let install_outcome = perform_install(&device, &package).await;
-				tx.send(install_outcome).await.expect("Error sending operation outcome.");
+				tx.send(install_outcome)
+					.await
+					.expect("Error sending operation outcome.");
 			});
 		}
 		ReceiverStream::new(rx)

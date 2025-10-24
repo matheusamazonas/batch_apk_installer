@@ -1,13 +1,12 @@
 use crate::config::Config;
+use crate::error::Error;
 use crate::installation::DeviceInstallations;
-use crate::package::PackageFile;
-use futures::{StreamExt, stream};
+use futures::{stream, StreamExt};
 use std::env;
 use std::path::PathBuf;
 use std::process;
 use std::process::{Command, Stdio};
 use std::sync::Arc;
-use crate::error::Error;
 
 mod config;
 mod device;
@@ -57,14 +56,14 @@ fn get_parameters(args: Vec<String>) -> Result<(String, bool), Error> {
 		Some(arg) => arg == "-u",
 		None => false,
 	};
-	
+
 	Ok((version, uninstall))
 }
 
 #[tokio::main]
 async fn main() {
 	let args: Vec<String> = env::args().collect();
-	let (version, uninstall) = match get_parameters(args)  {
+	let (version, uninstall) = match get_parameters(args) {
 		Ok((version, uninstall)) => (version, uninstall),
 		Err(e) => {
 			print_error(&e.to_string());

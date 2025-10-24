@@ -77,7 +77,7 @@ pub fn find_all_packages(dir: &PathBuf, configs: &[PackageConfig]) -> Result<Vec
 				.filter_map(|f| build_package(f, configs))
 				.collect();
 			Ok(files)
-		},
+		}
 		_ => {
 			let path = dir.to_string_lossy().to_string();
 			Err(Error::NoPackageDirectory(path))

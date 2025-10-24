@@ -8,7 +8,7 @@ use std::io::Write;
 pub type Platform = String;
 pub type PackageID = String;
 
-const CONFIG_PATH: &str = "Library/Application Support/APK installer";
+const CONFIG_PATH: &str = "APK Installer";
 const CONFIG_FILE: &str = "config.toml";
 const CONFIG_TEMPLATE: &str = r#"directory = "/Users/user_name/Desktop"
 platforms = [ "quest", "pico" ]
@@ -37,12 +37,12 @@ pub struct Config {
 
 impl Config {
 	pub fn build() -> Result<Config, Error> {
-		let home_path = std::env::home_dir().ok_or(Error::NoHomeDirectory)?;
-		let folder_path = home_path.join(CONFIG_PATH);
-		let file_path = folder_path.join(CONFIG_FILE);
+		let config_folder_path = dirs::config_dir().ok_or(Error::NoHomeDirectory)?;
+		let app_folder_path = config_folder_path.join(CONFIG_PATH);
+		let file_path = app_folder_path.join(CONFIG_FILE);
 		let Ok(config) = fs::read_to_string(&file_path) else {
-			if !fs::exists(&folder_path)? {
-				fs::create_dir_all(&folder_path)?;
+			if !fs::exists(&app_folder_path)? {
+				fs::create_dir_all(&app_folder_path)?;
 			}
 			let mut file = File::create(&file_path)?;
 			file.write_all(CONFIG_TEMPLATE.as_bytes())?;
