@@ -7,6 +7,7 @@ use std::path::PathBuf;
 use std::process;
 use std::process::{Command, Stdio};
 use std::sync::Arc;
+use crate::error::Error;
 
 mod config;
 mod device;
@@ -35,27 +36,41 @@ fn print_error(error: &str) {
 	eprintln!("\x1b[91m{}\x1b[0m", error);
 }
 
-#[tokio::main]
-async fn main() {
+fn get_parameters(args: Vec<String>) -> Result<(String, bool), Error> {
 	if !has_adb() {
-		print_error("ADB not found. Ensure that ADB is installed.");
-		process::exit(1)
+		return Err(Error::MissingADB);
 	}
 
 	if !has_aapt() {
-		print_error("AAPT2 not found. Ensure that AAPT2 is installed.");
-		process::exit(1)
+		return Err(Error::MissingAAPT);
 	}
 
-	let args: Vec<String> = env::args().collect();
-	let Some(version) = args.get(1) else {
-		print_error("Missing arguments: version.");
-		process::exit(1);
+	let Some(version_arg) = args.get(1) else {
+		return Err(Error::MissingVersionArgument);
+	};
+
+	let Ok(version) = config::parse_version(version_arg) else {
+		return Err(Error::Parsing(String::from("Invalid version argument.")));
 	};
 
 	let uninstall = match args.get(2) {
 		Some(arg) => arg == "-u",
 		None => false,
+	};
+	
+	Ok((version, uninstall))
+}
+
+#[tokio::main]
+async fn main() {
+	let args: Vec<String> = env::args().collect();
+	let (version, uninstall) = match get_parameters(args)  {
+		Ok((version, uninstall)) => (version, uninstall),
+		Err(e) => {
+			let error_message = e.to_string();
+			print_error(&error_message);
+			process::exit(1);
+		}
 	};
 
 	let config = match Config::build() {

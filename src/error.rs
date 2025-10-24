@@ -6,6 +6,9 @@ use string::FromUtf8Error;
 #[derive(Debug, PartialEq, Clone)]
 pub enum Error {
 	IO(String),
+	MissingADB,
+	MissingAAPT,
+	MissingVersionArgument,
 	NoHomeDirectory,
 	Parsing(String),
 	NoDeviceName,
@@ -24,6 +27,9 @@ impl Display for Error {
 	fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
 		match self {
 			Error::IO(e) => write!(f, "IO Error: {e}"),
+			Error::MissingADB => write!(f, "ADB is missing."),
+			Error::MissingAAPT => write!(f, "AAPT is missing."),
+			Error::MissingVersionArgument => write!(f, "Missing argument: version."),
 			Error::NoHomeDirectory => write!(f, "No home directory found"),
 			Error::Parsing(e) => write!(f, "Parsing Error: {e}"),
 			Error::NoDeviceName => write!(f, "No device name provided"),
