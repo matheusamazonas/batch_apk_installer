@@ -32,10 +32,10 @@ fn command_exists(command: &str, args: &str) -> bool {
 }
 
 fn print_error(error: &str) {
-	eprintln!("\x1b[91m{}\x1b[0m", error);
+	eprintln!("\x1b[91m{error}\x1b[0m");
 }
 
-fn get_parameters(args: Vec<String>) -> Result<(String, bool), Error> {
+fn get_parameters(args: &[String]) -> Result<(String, bool), Error> {
 	if !has_adb() {
 		return Err(Error::MissingADB);
 	}
@@ -63,7 +63,7 @@ fn get_parameters(args: Vec<String>) -> Result<(String, bool), Error> {
 #[tokio::main]
 async fn main() {
 	let args: Vec<String> = env::args().collect();
-	let (version, uninstall) = match get_parameters(args) {
+	let (version, uninstall) = match get_parameters(&args) {
 		Ok((version, uninstall)) => (version, uninstall),
 		Err(e) => {
 			print_error(&e.to_string());
@@ -124,7 +124,7 @@ async fn main() {
 						let error = format!("{description} failed: {e}.");
 						print_error(&error);
 					}
-					None => println!("\x1b[92m{} completed successfully.\x1b[0m", description),
+					None => println!("\x1b[92m{description} completed successfully.\x1b[0m"),
 				}
 			}
 		}

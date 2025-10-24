@@ -22,8 +22,8 @@ impl CommandOutcome {
 		&self.description
 	}
 
-	pub fn error(&self) -> &Option<Error> {
-		&self.error
+	pub fn error(&self) -> Option<&Error> {
+		self.error.as_ref()
 	}
 }
 
@@ -33,7 +33,7 @@ impl DeviceInstallations {
 	) -> Vec<DeviceInstallations> {
 		let mut requests: Vec<DeviceInstallations> = Vec::new();
 		for device in devices {
-			let matches = packages.iter().filter(|p| is_package_match(&device, p));
+			let matches = packages.iter().filter(|p| is_package_match(device, p));
 			let mut packages = vec![];
 			for package in matches {
 				let package = package.clone();

@@ -69,19 +69,16 @@ pub fn find_all_packages(dir: &PathBuf, configs: &[PackageConfig]) -> Result<Vec
 		Some(package)
 	}
 
-	match fs::exists(dir) {
-		Ok(true) => {
-			let files = find_apk_files(dir)?
-				.into_iter()
-				.filter_map(|f| get_package_file(&f).ok())
-				.filter_map(|f| build_package(f, configs))
-				.collect();
-			Ok(files)
-		}
-		_ => {
-			let path = dir.to_string_lossy().to_string();
-			Err(Error::NoPackageDirectory(path))
-		}
+	if let Ok(true) = fs::exists(dir) {
+		let files = find_apk_files(dir)?
+			.into_iter()
+			.filter_map(|f| get_package_file(&f).ok())
+			.filter_map(|f| build_package(f, configs))
+			.collect();
+		Ok(files)
+	} else {
+		let path = dir.to_string_lossy().to_string();
+		Err(Error::NoPackageDirectory(path))
 	}
 }
 
