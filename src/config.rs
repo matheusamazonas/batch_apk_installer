@@ -84,7 +84,7 @@ impl Config {
 /// assert_eq!(apk_installer::parse_version("5.1.1.1"), Ok("5.1.1.1".to_string()));
 /// ```
 pub fn parse_version(input: &str) -> Result<String, Error> {
-	let regex = Regex::new(r"\b\d+(\.\d+\b)+")?;
+	let regex = Regex::new(r"\b\d+(\.\d+\b)+$")?;
 	let result = regex
 		.find(input)
 		.ok_or(Error::Parsing(String::from("Failed to parse version.")))?;
@@ -149,5 +149,6 @@ mod tests {
 		assert!(parse_version("1. 0").is_err());
 		assert!(parse_version("1 .0").is_err());
 		assert!(parse_version("1.a.0").is_err());
+		assert!(parse_version("1.1.a").is_err());
 	}
 }
