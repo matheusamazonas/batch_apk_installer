@@ -27,19 +27,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "apk_installer"
-version = "0.1.0"
-dependencies = [
- "dirs",
- "futures",
- "regex",
- "serde",
- "tokio",
- "tokio-stream",
- "toml",
-]
-
-[[package]]
 name = "autocfg"
 version = "1.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -58,6 +45,19 @@ dependencies = [
  "object",
  "rustc-demangle",
  "windows-link",
+]
+
+[[package]]
+name = "batch_apk_installer"
+version = "0.1.0"
+dependencies = [
+ "dirs",
+ "futures",
+ "regex",
+ "serde",
+ "tokio",
+ "tokio-stream",
+ "toml",
 ]
 
 [[package]]
