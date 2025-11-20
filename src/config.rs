@@ -8,7 +8,7 @@ use std::io::Write;
 pub type Platform = String;
 pub type PackageID = String;
 
-const CONFIG_PATH: &str = "APK Installer";
+const CONFIG_PATH: &str = "Batch APK Installer";
 const CONFIG_FILE: &str = "config.toml";
 const CONFIG_TEMPLATE: &str = r#"directory = "/Users/user_name/Desktop"
 platforms = [ "quest", "pico" ]
