@@ -1,6 +1,21 @@
 [package]
-name = "installer"
-version = "0.1.0"
+name = "batch_apk_installer"
+description = "A command-line tool for batch installation of Android Packages (APKs)."
+version = "1.0.0"
 edition = "2024"
+license = "MIT"
+authors = ["Matheus Amazonas"]
+readme = "README.md"
+homepage = "https://github.com/matheusamazonas/batch_apk_installer"
+repository = "https://github.com/matheusamazonas/batch_apk_installer"
+categories = ["command-line-utilities", "development-tools"]
+keywords = ["adb", "installer", "batch", "multiple"]
 
 [dependencies]
+dirs = "6.0.0"
+futures = "0.3.31"
+regex = "1.11.1"
+serde = { version = "1.0.219", features = ["derive"] }
+tokio = { version = "1.47.1", features = ["full"] }
+tokio-stream = "0.1.17"
+toml = "0.9.5"
