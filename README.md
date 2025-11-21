@@ -17,12 +17,12 @@ Batch APK Installer is accessible via the command line with the following syntax
 ```
 
 Where:
-    `<batch_apk_installer>` is the name of the binary.
-	`<version>` is the version in the semantic versioning format (e.g., 2.1 and 4.1.2), 
+  - `<batch_apk_installer>` is the name of the binary.
+  - `<version>` is the version in the semantic versioning format (e.g., 2.1 and 4.1.2), 
 
 And the following options are available:
-	`-u`: whether the packages should be uninstalled from the devices before being installed. 
-	`-h`displays the help text.
+- `-u`: whether the packages should be uninstalled from the devices before being installed. 
+- `-h`displays the help text.
 
 For example:
 
