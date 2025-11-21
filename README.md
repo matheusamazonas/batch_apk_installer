@@ -12,7 +12,7 @@ Simply run `cargo build --release` and use the generated binary.
 # Usage
 Batch APK Installer is accessible via the command line with the following syntax:
 
-```batch
+```
 <batch_apk_installer> <version> [options...]
 ```
 
