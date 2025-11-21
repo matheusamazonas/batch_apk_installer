@@ -63,6 +63,20 @@ fn get_parameters(args: &[String]) -> Result<(String, bool), Error> {
 #[tokio::main]
 async fn main() {
 	let args: Vec<String> = env::args().collect();
+	if args.contains(&String::from("-h")) {
+		println!(
+			"Usage: <batch_apk_installer> <version> [options...]\n\
+			Where:\n\
+			\t<batch_apk_installer> is the name of the binary.\n\
+			\t<version> is the version in the semantic versioning format (e.g. 2.1 and 4.1.2). \n\
+			And the following options are available:\n\
+			\t-u\twhether the packages should be uninstalled from the devices before being \
+			installed. \n\
+		    \t-h\tdisplays the help text (this one)."
+		);
+		process::exit(0);
+	}
+
 	let (version, uninstall) = match get_parameters(&args) {
 		Ok((version, uninstall)) => (version, uninstall),
 		Err(e) => {
