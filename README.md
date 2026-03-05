@@ -22,7 +22,7 @@ Where:
 
 And the following options are available:
 - `-u`: whether the packages should be uninstalled from the devices before being installed. 
-- `-h`displays the help text.
+- `-h`: displays the help text.
 
 For example:
 
@@ -30,7 +30,7 @@ For example:
 bai 5.1 -u
 ```
 
-The Batch APK Installer binary is called `bai`. The command requests installation of version 5.1, preceded by uninstallation.
+On the command above, the Batch APK Installer binary is called `bai`. The command requests installation of version 5.1, preceded by uninstallation.
 
 # Configuration and first run
 Batch APK Installer loads installation requirements from a config file named `config.toml`, located at the user's configuration directory, dependent on the OS:
