@@ -40,7 +40,12 @@ impl DeviceInstallations {
 				packages.push(package);
 			}
 			let device = device.clone();
-			requests.push(DeviceInstallations { device, packages, uninstall_first});
+			let installations = DeviceInstallations {
+				device,
+				packages,
+				uninstall_first,
+			};
+			requests.push(installations);
 		}
 		requests
 	}
@@ -72,7 +77,8 @@ impl DeviceInstallations {
 }
 
 fn is_package_match(device: &Device, package: &Package) -> bool {
-	package.platforms()
+	package
+		.platforms()
 		.iter()
 		.any(|p| match package.match_file_name() {
 			false => device.platform() == p,

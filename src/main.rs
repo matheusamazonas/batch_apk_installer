@@ -1,7 +1,7 @@
 use crate::config::Config;
 use crate::error::Error;
 use crate::installation::DeviceInstallations;
-use futures::{stream, StreamExt};
+use futures::{StreamExt, stream};
 use std::env;
 use std::path::PathBuf;
 use std::process;
