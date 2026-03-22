@@ -1,4 +1,4 @@
-name: Build, test and generate documentation
+name: Build
 
 on:
   push:

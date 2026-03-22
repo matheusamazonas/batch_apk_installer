@@ -1,6 +1,9 @@
 # Batch APK Installer
 A command-line tool for batch installation of Android Packages (APKs).
 
+[![CI](https://github.com/matheusamazonas/batch_apk_installer/actions/workflows/ci.yaml/badge.svg)](https://github.com/matheusamazonas/batch_apk_installer/actions)
+[![Crates.io](https://img.shields.io/crates/v/batch_apk_installer)](https://crates.io/crates/batch_apk_installer)
+
 # Features
 - Support for multiple device platforms based on the device's name and model.
 - Multiple APK support based on package identifier.
