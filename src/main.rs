@@ -44,12 +44,8 @@ fn get_parameters(args: &[String]) -> Result<(String, bool), Error> {
 		return Err(Error::MissingAAPT);
 	}
 
-	let Some(version_arg) = args.get(1) else {
+	let Some(packages_folder) = args.get(1) else {
 		return Err(Error::MissingVersionArgument);
-	};
-
-	let Ok(version) = config::parse_version(version_arg) else {
-		return Err(Error::Parsing(String::from("Invalid version argument.")));
 	};
 
 	let uninstall = match args.get(2) {
@@ -57,7 +53,7 @@ fn get_parameters(args: &[String]) -> Result<(String, bool), Error> {
 		None => false,
 	};
 
-	Ok((version, uninstall))
+	Ok((packages_folder.clone(), uninstall))
 }
 
 #[tokio::main]
@@ -77,8 +73,8 @@ async fn main() {
 		process::exit(0);
 	}
 
-	let (version, uninstall) = match get_parameters(&args) {
-		Ok((version, uninstall)) => (version, uninstall),
+	let (packages_folder, uninstall) = match get_parameters(&args) {
+		Ok((packages_folder, uninstall)) => (packages_folder, uninstall),
 		Err(e) => {
 			print_error(&e.to_string());
 			process::exit(1);
@@ -111,7 +107,7 @@ async fn main() {
 		println!("Found device: {device}.");
 	}
 
-	let packages_dir = PathBuf::from(config.directory()).join(version);
+	let packages_dir = PathBuf::from(config.directory()).join(packages_folder);
 	let packages: Vec<_> = match package::find_all_packages(&packages_dir, config.packages()) {
 		Ok(packages) => packages.into_iter().map(Arc::new).collect(),
 		Err(e) => {
