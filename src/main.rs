@@ -61,10 +61,12 @@ async fn main() {
 	let args: Vec<String> = env::args().collect();
 	if args.contains(&String::from("-h")) {
 		println!(
-			"Usage: <batch_apk_installer> <version> [options...]\n\
+			"Usage: <batch_apk_installer> <packages_folder> [options...]\n\
 			Where:\n\
 			\t<batch_apk_installer> is the name of the binary.\n\
-			\t<version> is the version in the semantic versioning format (e.g. 2.1 and 4.1.2). \n\
+			\t<packages_folder> is the name (not the path) of the folder containing the packages (APKs)\n\
+			\t                  you would like to install. This folder must be a subfolder of the one\n\
+			\t                  declared in the configuration's `directory` field. \n\
 			And the following options are available:\n\
 			\t-u\twhether the packages should be uninstalled from the devices before being \
 			installed. \n\
