@@ -16,15 +16,15 @@ Simply run `cargo build --release` and use the generated binary.
 Batch APK Installer is accessible via the command line with the following syntax:
 
 ```
-<batch_apk_installer> <version> [options...]
+<batch_apk_installer> <packages_folder> [options...]
 ```
 
 Where:
   - `<batch_apk_installer>` is the name of the binary.
-  - `<version>` is the version in the semantic versioning format (e.g., 2.1 and 4.1.2), 
+  - `<packages_folder>` is the name (not the path) of the folder containing the packages (APKs) you would like to install. This folder must be a subfolder of the one declared in the configuration's `directory` field.
 
 And the following options are available:
-- `-u`: whether the packages should be uninstalled from the devices before being installed. 
+- `-u`: whether the packages should be uninstalled from the devices before being installed.
 - `-h`: displays the help text.
 
 For example:
@@ -33,7 +33,7 @@ For example:
 bai 5.1 -u
 ```
 
-On the command above, the Batch APK Installer binary is called `bai`. The command requests installation of version 5.1, preceded by uninstallation.
+On the command above, the Batch APK Installer binary is called `bai`. The command requests installation of packages inside the folder named `5.1`, preceded by uninstallation.
 
 # Configuration and first run
 Batch APK Installer loads installation requirements from a config file named `config.toml`, located at the user's configuration directory, dependent on the OS:
@@ -67,7 +67,7 @@ The file contains two parts: global and package configuration.
 
 ## Global configuration
 Global configuration contains two fields:
-- `directory`: the folder where APKs should be placed, aggregated in subfolders named after different application versions. Taking the config file as an example, if we run `bai 5.1`, the tool will look for APKs inside `/Users/user_name/Desktop/5.1`.
+- `directory`: the folder where APKs should be placed, aggregated in subfolders whose names are used as command-line arguments. Taking the config file as an example, if we run `bai 5.1`, the tool will look for APKs inside `/Users/user_name/Desktop/5.1`.
 - `platforms`: which platforms can be used with this config file. Platforms act like filters on devices, separating them into different buckets. The filtering is based off the device's name and model name, comparing it (case insensitive) to the platform name. Taking the config file above as an example, 
 	- Devices named `Pico_Neo_3` and `PICOA7H10` will be filtered as `pico` platform.
 	- Devices named `Quest_2` and `Quest_3S` will be filtered as `quest` platform.
@@ -148,7 +148,7 @@ Batch APK Installer has the following dependencies:
 - `dirs`: for OS-agnostic fetching of the user's config path.
 - `futures`, `tokio` and `tokio-stream`: for asynchronous programming.
 - `serde` and `toml`: for (de)serialization of config files.
-- `regex`: for parsing version strings.
+- `regex`: for parsing device info.
 
 # License
 Batch APK Installer is distributed under the terms of the MIT license. For more information, check the [LICENSE](LICENSE) file in this repository.
