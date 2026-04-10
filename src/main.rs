@@ -45,7 +45,7 @@ fn get_parameters(args: &[String]) -> Result<(String, bool), Error> {
 	}
 
 	let Some(packages_folder) = args.get(1) else {
-		return Err(Error::MissingVersionArgument);
+		return Err(Error::MissingPackagesFolderArgument);
 	};
 
 	let uninstall = match args.get(2) {
