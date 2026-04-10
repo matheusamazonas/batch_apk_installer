@@ -116,6 +116,11 @@ async fn main() {
 		}
 	};
 
+	if packages.is_empty() {
+		print_error("No packages found.");
+		process::exit(1);
+	}
+
 	let installs = DeviceInstallations::build_requests(&devices, &packages, uninstall);
 	match installs.len() {
 		0 => {
