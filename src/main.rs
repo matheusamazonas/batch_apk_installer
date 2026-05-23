@@ -1,7 +1,7 @@
 use crate::config::Config;
 use crate::error::Error;
 use crate::installation::DeviceInstallations;
-use futures::{stream, StreamExt};
+use futures::{StreamExt, stream};
 use std::env;
 use std::path::PathBuf;
 use std::process;
@@ -44,12 +44,8 @@ fn get_parameters(args: &[String]) -> Result<(String, bool), Error> {
 		return Err(Error::MissingAAPT);
 	}
 
-	let Some(version_arg) = args.get(1) else {
-		return Err(Error::MissingVersionArgument);
-	};
-
-	let Ok(version) = config::parse_version(version_arg) else {
-		return Err(Error::Parsing(String::from("Invalid version argument.")));
+	let Some(packages_folder) = args.get(1) else {
+		return Err(Error::MissingPackagesFolderArgument);
 	};
 
 	let uninstall = match args.get(2) {
@@ -57,7 +53,7 @@ fn get_parameters(args: &[String]) -> Result<(String, bool), Error> {
 		None => false,
 	};
 
-	Ok((version, uninstall))
+	Ok((packages_folder.clone(), uninstall))
 }
 
 #[tokio::main]
@@ -65,10 +61,12 @@ async fn main() {
 	let args: Vec<String> = env::args().collect();
 	if args.contains(&String::from("-h")) {
 		println!(
-			"Usage: <batch_apk_installer> <version> [options...]\n\
+			"Usage: <batch_apk_installer> <packages_folder> [options...]\n\
 			Where:\n\
 			\t<batch_apk_installer> is the name of the binary.\n\
-			\t<version> is the version in the semantic versioning format (e.g. 2.1 and 4.1.2). \n\
+			\t<packages_folder> is the name (not the path) of the folder containing the packages (APKs)\n\
+			\t                  you would like to install. This folder must be a subfolder of the one\n\
+			\t                  declared in the configuration's `directory` field. \n\
 			And the following options are available:\n\
 			\t-u\twhether the packages should be uninstalled from the devices before being \
 			installed. \n\
@@ -77,8 +75,8 @@ async fn main() {
 		process::exit(0);
 	}
 
-	let (version, uninstall) = match get_parameters(&args) {
-		Ok((version, uninstall)) => (version, uninstall),
+	let (packages_folder, uninstall) = match get_parameters(&args) {
+		Ok((packages_folder, uninstall)) => (packages_folder, uninstall),
 		Err(e) => {
 			print_error(&e.to_string());
 			process::exit(1);
@@ -111,7 +109,7 @@ async fn main() {
 		println!("Found device: {device}.");
 	}
 
-	let packages_dir = PathBuf::from(config.directory()).join(version);
+	let packages_dir = PathBuf::from(config.directory()).join(packages_folder);
 	let packages: Vec<_> = match package::find_all_packages(&packages_dir, config.packages()) {
 		Ok(packages) => packages.into_iter().map(Arc::new).collect(),
 		Err(e) => {
@@ -119,6 +117,11 @@ async fn main() {
 			process::exit(1);
 		}
 	};
+
+	if packages.is_empty() {
+		print_error("No packages found.");
+		process::exit(1);
+	}
 
 	let installs = DeviceInstallations::build_requests(&devices, &packages, uninstall);
 	match installs.len() {
