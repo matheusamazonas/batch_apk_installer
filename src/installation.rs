@@ -76,15 +76,27 @@ impl DeviceInstallations {
 			let tx = tx.clone();
 			tokio::task::spawn(async move {
 				if self.uninstall_first {
-					let uninstall_outcome = device.uninstall(&package).await;
-					tx.send(uninstall_outcome)
-						.await
-						.expect("Error sending operation outcome.");
+					match device.has_app_installed(package.id()).await {
+						Ok(true) => {
+							// App is installed, uninstall it first.
+							let uninstall_outcome = device.uninstall(&package).await;
+							tx.send(uninstall_outcome)
+								.await
+								.expect("Error sending uninstallation outcome.");
+						}
+						Ok(false) => (), // Do nothing because the app is not installed.
+						Err(e) => {
+							let error = CommandOutcome::from_error("Uninstall check failed", e);
+							tx.send(error)
+								.await
+								.expect("Error sending uninstallation check error.");
+						}
+					}
 				}
 				let install_outcome = device.install(&package).await;
 				tx.send(install_outcome)
 					.await
-					.expect("Error sending operation outcome.");
+					.expect("Error sending installation outcome.");
 			});
 		}
 		ReceiverStream::new(rx)

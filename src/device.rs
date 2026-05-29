@@ -58,6 +58,23 @@ impl Device {
 		}
 	}
 
+	pub async fn has_app_installed(&self, app_name: &str) -> Result<bool, Error> {
+		let output = tokio::process::Command::new("adb")
+			.args([
+				"-s",
+				&self.id,
+				"shell",
+				"pm list packages",
+				"| grep",
+				app_name,
+			])
+			.output();
+		match output.await {
+			Ok(output) => Ok(output.status.success()),
+			Err(e) => Err(Error::Uninstall(e.to_string())),
+		}
+	}
+
 	fn from_str_with_platforms(line: &str, platforms: &[Platform]) -> Option<Device> {
 		let (id, platform) = Self::parse_info(line, platforms)?;
 		let name = Self::parse_name(&id).ok()?;
