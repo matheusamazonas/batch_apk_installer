@@ -1,5 +1,7 @@
 use crate::config::Platform;
 use crate::error::Error;
+use crate::installation::CommandOutcome;
+use crate::package::Package;
 use regex::Regex;
 use std::fmt::Display;
 use std::process::Command;
@@ -11,16 +13,49 @@ pub struct Device {
 }
 
 impl Device {
-	pub fn name(&self) -> &str {
-		&self.name
+	pub fn supports(&self, package: &Package) -> bool {
+		package
+			.platforms()
+			.iter()
+			.any(|p| match package.match_file_name() {
+				false => &self.platform == p,
+				true => package.file_name().to_lowercase().contains(&self.platform),
+			})
 	}
 
-	pub fn id(&self) -> &str {
-		&self.id
+	pub async fn install(&self, package: &Package) -> CommandOutcome {
+		let path = package.path();
+		let command = tokio::process::Command::new("adb")
+			.args(["-s", &self.id, "install", path])
+			.output();
+		let description = format!("Installation of {} on {}", package.id(), self.name);
+		match command.await {
+			Ok(output) if output.status.success() => CommandOutcome::from_success(&description),
+			Ok(output) => {
+				let error = Error::from_installation_error(&output.stderr);
+				CommandOutcome::from_error(&description, error)
+			}
+			Err(e) => CommandOutcome::from_error(&description, Error::Installation(e.to_string())),
+		}
 	}
 
-	pub fn platform(&self) -> &String {
-		&self.platform
+	pub async fn uninstall(&self, package: &Package) -> CommandOutcome {
+		let description = format!("Uninstallation of {} on {}", package.id(), self.name);
+		let command = tokio::process::Command::new("adb")
+			.args(["-s", &self.id, "uninstall", package.id()])
+			.output();
+		match command.await {
+			Ok(output) if output.status.success() => CommandOutcome::from_success(&description),
+			Ok(output) => {
+				let message = String::from_utf8_lossy(&output.stdout);
+				let error = Error::Uninstall(message.to_string());
+				CommandOutcome::from_error(&description, error)
+			}
+			Err(e) => {
+				let error = Error::Uninstall(e.to_string());
+				CommandOutcome::from_error(&description, error)
+			}
+		}
 	}
 
 	fn from_str_with_platforms(line: &str, platforms: &[Platform]) -> Option<Device> {
