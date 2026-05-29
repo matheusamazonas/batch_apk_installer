@@ -33,15 +33,20 @@ impl DeviceInstallations {
 	) -> Vec<DeviceInstallations> {
 		let mut requests: Vec<DeviceInstallations> = Vec::new();
 		for device in devices {
-			let matches = packages.iter().filter(|p| is_package_match(device, p));
-			let mut packages = vec![];
+			let matches: Vec<_> = packages
+				.iter()
+				.filter(|p| is_package_match(device, p))
+				.collect();
+			if matches.is_empty() {
+				continue;
+			}
+			let mut packages = Vec::with_capacity(matches.len());
 			for package in matches {
 				let package = package.clone();
 				packages.push(package);
 			}
-			let device = device.clone();
 			let installations = DeviceInstallations {
-				device,
+				device: device.clone(),
 				packages,
 				uninstall_first,
 			};
