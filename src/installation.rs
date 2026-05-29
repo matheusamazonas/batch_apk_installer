@@ -6,12 +6,6 @@ use std::sync::Arc;
 use tokio::sync::mpsc;
 use tokio_stream::wrappers::ReceiverStream;
 
-pub struct DeviceInstallations {
-	device: Arc<Device>,
-	packages: Vec<Arc<Package>>,
-	uninstall_first: bool,
-}
-
 pub struct CommandOutcome {
 	description: String,
 	error: Option<Error>,
@@ -25,6 +19,12 @@ impl CommandOutcome {
 	pub fn error(&self) -> Option<&Error> {
 		self.error.as_ref()
 	}
+}
+
+pub struct DeviceInstallations {
+	device: Arc<Device>,
+	packages: Vec<Arc<Package>>,
+	uninstall_first: bool,
 }
 
 impl DeviceInstallations {

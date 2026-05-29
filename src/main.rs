@@ -1,6 +1,8 @@
 use crate::config::Config;
+use crate::device::Device;
 use crate::error::Error;
 use crate::installation::DeviceInstallations;
+use crate::package::Package;
 use futures::{StreamExt, stream};
 use std::env;
 use std::path::PathBuf;
@@ -92,7 +94,7 @@ async fn main() {
 		}
 	};
 
-	let devices: Vec<_> = match device::get_devices(config.platforms()) {
+	let devices: Vec<_> = match Device::get_devices(config.platforms()) {
 		Ok(devices) if !devices.is_empty() => devices.into_iter().map(Arc::new).collect(),
 		Ok(_) => {
 			print_error("No devices were found.");
@@ -110,7 +112,7 @@ async fn main() {
 	}
 
 	let packages_dir = PathBuf::from(config.directory()).join(packages_folder);
-	let packages: Vec<_> = match package::find_all_packages(&packages_dir, config.packages()) {
+	let packages: Vec<_> = match Package::find_all(&packages_dir, config.packages()) {
 		Ok(packages) => packages.into_iter().map(Arc::new).collect(),
 		Err(e) => {
 			print_error(&e.to_string());
