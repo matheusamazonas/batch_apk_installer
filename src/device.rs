@@ -22,6 +22,51 @@ impl Device {
 	pub fn platform(&self) -> &String {
 		&self.platform
 	}
+
+	fn from_str_with_platforms(line: &str, platforms: &[Platform]) -> Option<Device> {
+		let (id, platform) = Self::parse_info(line, platforms)?;
+		let name = Self::parse_name(&id).ok()?;
+		let device = Self { name, id, platform };
+		Some(device)
+	}
+
+	fn parse_name(id: &str) -> Result<String, Error> {
+		let output = Command::new("adb")
+			.args(["-s", id, "shell", "settings get global device_name"])
+			.output()?;
+		let name = String::from_utf8(output.stdout)?;
+		match name.len() {
+			0 => Err(Error::NoDeviceName),
+			_ => Ok(String::from(name.trim_end())),
+		}
+	}
+
+	fn parse_info(line: &str, platforms: &[Platform]) -> Option<(String, Platform)> {
+		let regex = Regex::new(r"(\w+)\s+.*model:(\w+)\sdevice:(\w+)").ok()?;
+		let caps = regex.captures(line)?;
+		let id = String::from(caps.get(1)?.as_str());
+		let model = caps.get(2)?.as_str();
+		let device_name = caps.get(3)?.as_str();
+		let platform = get_platform(model, platforms).or(get_platform(device_name, platforms))?;
+		Some((id, platform))
+	}
+
+	pub fn get_devices(platforms: &[Platform]) -> Result<Vec<Device>, Error> {
+		let output = Command::new("adb").args(["devices", "-l"]).output()?;
+		let output = String::from_utf8(output.stdout)?;
+		let header_line_ix = output
+			.lines()
+			.position(|l| l.contains("List of devices attached"))
+			.ok_or(Error::DevicesFetching)?;
+
+		let devices = output
+			.lines()
+			.skip(header_line_ix + 1)
+			.filter(|l| !l.is_empty())
+			.filter_map(|l| Self::from_str_with_platforms(l, platforms))
+			.collect();
+		Ok(devices)
+	}
 }
 
 impl Display for Device {
@@ -30,55 +75,10 @@ impl Display for Device {
 	}
 }
 
-pub fn get_devices(platforms: &[Platform]) -> Result<Vec<Device>, Error> {
-	let output = Command::new("adb").args(["devices", "-l"]).output()?;
-	let output = String::from_utf8(output.stdout)?;
-	let header_line_ix = output
-		.lines()
-		.position(|l| l.contains("List of devices attached"))
-		.ok_or(Error::DevicesFetching)?;
-
-	let devices = output
-		.lines()
-		.skip(header_line_ix + 1)
-		.filter(|l| !l.is_empty())
-		.filter_map(|l| parse_device(l, platforms))
-		.collect();
-	Ok(devices)
-}
-
-fn parse_device(line: &str, platforms: &[Platform]) -> Option<Device> {
-	let (id, platform) = parse_device_info(line, platforms)?;
-	let name = get_device_name(&id).ok()?;
-	let device = Device { name, id, platform };
-	Some(device)
-}
-
-fn parse_device_info(line: &str, platforms: &[Platform]) -> Option<(String, Platform)> {
-	let regex = Regex::new(r"(\w+)\s+.*model:(\w+)\sdevice:(\w+)").ok()?;
-	let caps = regex.captures(line)?;
-	let id = String::from(caps.get(1)?.as_str());
-	let model = caps.get(2)?.as_str();
-	let device_name = caps.get(3)?.as_str();
-	let platform = get_platform(model, platforms).or(get_platform(device_name, platforms))?;
-	Some((id, platform))
-}
-
 fn get_platform(identifier: &str, platforms: &[Platform]) -> Option<Platform> {
 	let identifier = identifier.to_lowercase();
 	let platform = platforms.iter().find(|p| identifier.contains(*p))?;
 	Some(platform.clone())
-}
-
-fn get_device_name(id: &str) -> Result<String, Error> {
-	let output = Command::new("adb")
-		.args(["-s", id, "shell", "settings get global device_name"])
-		.output()?;
-	let name = String::from_utf8(output.stdout)?;
-	match name.len() {
-		0 => Err(Error::NoDeviceName),
-		_ => Ok(String::from(name.trim_end())),
-	}
 }
 
 #[cfg(test)]
@@ -122,7 +122,7 @@ mod tests {
 		let data = "PA7L50MGF8290021W      device usb:34873344X product:A7H10 model:Pico_Neo_3 \
 		 device:PICOA7H10 transport_id:2";
 		let platforms = get_platforms();
-		let info = parse_device_info(data, &platforms);
+		let info = Device::parse_info(data, &platforms);
 		assert!(info.is_some());
 		let (id, platform) = info.unwrap();
 		assert_eq!(id, String::from("PA7L50MGF8290021W"));
@@ -134,7 +134,7 @@ mod tests {
 		let data = "PA8150MGGB230744G      device usb:34603008X product:Phoenix_ovs model:A8110 \
 		 device:PICOA8110 transport_id:7";
 		let platforms = get_platforms();
-		let info = parse_device_info(data, &platforms);
+		let info = Device::parse_info(data, &platforms);
 		assert!(info.is_some());
 		let (id, platform) = info.unwrap();
 		assert_eq!(id, String::from("PA8150MGGB230744G"));
@@ -146,7 +146,7 @@ mod tests {
 		let data = "1WMHHA63PR1501         device usb:34603008X product:hollywood model:Quest_2 \
 		 device:hollywood transport_id:9";
 		let platforms = get_platforms();
-		let info = parse_device_info(data, &platforms);
+		let info = Device::parse_info(data, &platforms);
 		assert!(info.is_some());
 		let (id, platform) = info.unwrap();
 		assert_eq!(id, String::from("1WMHHA63PR1501"));
@@ -158,7 +158,7 @@ mod tests {
 		let data = "ce031713396bc92803     device usb:1048576X product:dreamltexx model:SM_G950F \
 		 device:dreamlte transport_id:4";
 		let platforms = get_platforms();
-		let info = parse_device_info(data, &platforms);
+		let info = Device::parse_info(data, &platforms);
 		assert!(info.is_some());
 		let (id, platform) = info.unwrap();
 		assert_eq!(id, String::from("ce031713396bc92803"));

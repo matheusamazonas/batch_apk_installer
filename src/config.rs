@@ -4,9 +4,6 @@ use serde::Deserialize;
 use std::fs::{self, File};
 use std::io::Write;
 
-pub type Platform = String;
-pub type PackageID = String;
-
 const CONFIG_PATH: &str = "Batch APK Installer";
 const CONFIG_FILE: &str = "config.toml";
 const CONFIG_TEMPLATE: &str = r#"directory = "/Users/user_name/Desktop"
@@ -26,6 +23,9 @@ match_file_name = true
 id = "com.company.product.quest_only_app"
 platforms = [ "pico" ]
 match_file_name = true"#;
+
+pub type Platform = String;
+pub type PackageID = String;
 
 #[derive(Deserialize)]
 pub struct Config {
