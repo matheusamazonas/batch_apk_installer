@@ -24,6 +24,19 @@ pub enum Error {
 	Uninstall(String),
 }
 
+impl Error {
+	pub fn from_installation_error(error: &[u8]) -> Error {
+		let error = String::from_utf8_lossy(error);
+		if error.contains("INSTALL_FAILED_UPDATE_INCOMPATIBLE") {
+			Error::PackageSignatureMismatch
+		} else if error.contains("INSTALL_FAILED_VERSION_DOWNGRADE") {
+			Error::PackageDowngrade
+		} else {
+			Error::Installation(String::from(error))
+		}
+	}
+}
+
 impl Display for Error {
 	fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
 		match self {
