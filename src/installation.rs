@@ -1,3 +1,4 @@
+use crate::console;
 use crate::device::Device;
 use crate::error::Error;
 use crate::package::Package;
@@ -37,6 +38,7 @@ impl CommandOutcome {
 pub struct DeviceInstallations {
 	device: Arc<Device>,
 	packages: Vec<Arc<Package>>,
+	warnings: Vec<String>,
 	uninstall_first: bool,
 }
 
@@ -46,7 +48,23 @@ impl DeviceInstallations {
 	) -> Vec<DeviceInstallations> {
 		let mut requests: Vec<DeviceInstallations> = Vec::new();
 		for device in devices {
-			let matches: Vec<_> = packages.iter().filter(|p| device.supports(p)).collect();
+			let mut matches: Vec<&Arc<Package>> = vec![];
+			let mut warnings: Vec<String> = vec![];
+			for package in packages.iter().filter(|p| device.supports(p)) {
+				// Check for duplicates.
+				if matches.iter().any(|p| p.id() == package.id()) {
+					let warning = format!(
+						"Duplicated {} package found for {}. Skipping {}.",
+						package.id(),
+						device,
+						package.path()
+					);
+					warnings.push(warning);
+				} else {
+					matches.push(package);
+				}
+			}
+			// Do not add empty installations.
 			if matches.is_empty() {
 				continue;
 			}
@@ -58,6 +76,7 @@ impl DeviceInstallations {
 			let installations = DeviceInstallations {
 				device: device.clone(),
 				packages,
+				warnings,
 				uninstall_first,
 			};
 			requests.push(installations);
@@ -70,6 +89,9 @@ impl DeviceInstallations {
 	}
 
 	pub fn perform(self) -> ReceiverStream<CommandOutcome> {
+		for warning in &self.warnings {
+			console::print_warning(warning);
+		}
 		let (tx, rx) = mpsc::channel(self.packages.len());
 		for package in self.packages {
 			let device = self.device.clone();
