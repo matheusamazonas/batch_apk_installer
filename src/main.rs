@@ -11,6 +11,7 @@ use std::process::{Command, Stdio};
 use std::sync::Arc;
 
 mod config;
+mod console;
 mod device;
 mod error;
 mod installation;
@@ -31,10 +32,6 @@ fn command_exists(command: &str, args: &str) -> bool {
 		.stderr(Stdio::null())
 		.status()
 		.is_ok()
-}
-
-fn print_error(error: &str) {
-	eprintln!("\x1b[91m{error}\x1b[0m");
 }
 
 fn get_parameters(args: &[String]) -> Result<(String, bool), Error> {
@@ -80,7 +77,7 @@ async fn main() {
 	let (packages_folder, uninstall) = match get_parameters(&args) {
 		Ok((packages_folder, uninstall)) => (packages_folder, uninstall),
 		Err(e) => {
-			print_error(&e.to_string());
+			console::print_error(&e.to_string());
 			process::exit(1);
 		}
 	};
@@ -89,7 +86,7 @@ async fn main() {
 		Ok(config) => config,
 		Err(e) => {
 			let message = format!("Error when loading config: {e}.");
-			print_error(&message);
+			console::print_error(&message);
 			process::exit(1)
 		}
 	};
@@ -97,12 +94,12 @@ async fn main() {
 	let devices: Vec<_> = match Device::get_devices(config.platforms()) {
 		Ok(devices) if !devices.is_empty() => devices.into_iter().map(Arc::new).collect(),
 		Ok(_) => {
-			print_error("No devices were found.");
+			console::print_error("No devices were found.");
 			process::exit(1)
 		}
 		Err(e) => {
 			let message = format!("Error when fetching devices: {e}.");
-			print_error(&message);
+			console::print_error(&message);
 			process::exit(1)
 		}
 	};
@@ -115,20 +112,20 @@ async fn main() {
 	let packages: Vec<_> = match Package::find_all(&packages_dir, config.packages()) {
 		Ok(packages) => packages.into_iter().map(Arc::new).collect(),
 		Err(e) => {
-			print_error(&e.to_string());
+			console::print_error(&e.to_string());
 			process::exit(1);
 		}
 	};
 
 	if packages.is_empty() {
-		print_error("No packages found.");
+		console::print_error("No packages found.");
 		process::exit(1);
 	}
 
 	let installs = DeviceInstallations::build_requests(&devices, &packages, uninstall);
 	match installs.len() {
 		0 => {
-			print_error("No installation requests found.");
+			console::print_error("No installation requests found.");
 			process::exit(1);
 		}
 		device_count => {
@@ -141,7 +138,7 @@ async fn main() {
 				match outcome.error() {
 					Some(e) => {
 						let error = format!("{description} failed: {e}.");
-						print_error(&error);
+						console::print_error(&error);
 					}
 					None => println!("\x1b[92m{description} completed successfully.\x1b[0m"),
 				}
