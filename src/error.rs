@@ -24,6 +24,8 @@ pub enum Error {
 	Uninstall(String),
 	WrongNumberOfArguments(usize, usize, usize),
 	UnknownArgument(String),
+	NoDevices,
+	NoPackages,
 }
 
 impl Error {
@@ -64,6 +66,8 @@ impl Display for Error {
 				"Wrong number of arguments: {actual}. Expected between {min} and {max}"
 			),
 			Error::UnknownArgument(e) => write!(f, "Unknown argument: {e}"),
+			Error::NoDevices => write!(f, "No devices were found"),
+			Error::NoPackages => write!(f, "No packages were found"),
 		}
 	}
 }

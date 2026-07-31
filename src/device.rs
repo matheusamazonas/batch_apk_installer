@@ -114,13 +114,18 @@ impl Device {
 			.position(|l| l.contains("List of devices attached"))
 			.ok_or(Error::DevicesFetching)?;
 
-		let devices = output
+		let devices: Vec<_> = output
 			.lines()
 			.skip(header_line_ix + 1)
 			.filter(|l| !l.is_empty())
 			.filter_map(|l| Self::from_str_with_platforms(l, platforms))
 			.collect();
-		Ok(devices)
+
+		if devices.is_empty() {
+			Err(Error::NoDevices)
+		} else {
+			Ok(devices)
+		}
 	}
 }
 

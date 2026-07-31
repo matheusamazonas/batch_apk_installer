@@ -39,11 +39,7 @@ async fn main() {
 	};
 
 	let devices: Vec<_> = match Device::get_devices(config.platforms()) {
-		Ok(devices) if !devices.is_empty() => devices.into_iter().map(Arc::new).collect(),
-		Ok(_) => {
-			console::print_error("No devices were found.");
-			process::exit(1)
-		}
+		Ok(devices) => devices.into_iter().map(Arc::new).collect(),
 		Err(e) => {
 			let message = format!("Error when fetching devices: {e}.");
 			console::print_error(&message);
@@ -57,17 +53,12 @@ async fn main() {
 
 	let packages_dir = PathBuf::from(config.directory()).join(packages_folder);
 	let packages: Vec<_> = match Package::find_all(&packages_dir, config.packages()) {
-		Ok(packages) => packages.map(Arc::new).collect(),
+		Ok(packages) => packages.into_iter().map(Arc::new).collect(),
 		Err(e) => {
 			console::print_error(&e.to_string());
 			process::exit(1);
 		}
 	};
-
-	if packages.is_empty() {
-		console::print_error("No packages found.");
-		process::exit(1);
-	}
 
 	let installs = DeviceInstallations::build_requests(&devices, &packages, uninstall);
 	match installs.len() {
