@@ -22,6 +22,8 @@ pub enum Error {
 	PackageSignatureMismatch,
 	PackageDowngrade,
 	Uninstall(String),
+	WrongNumberOfArguments(usize, usize, usize),
+	UnknownArgument(String),
 }
 
 impl Error {
@@ -57,6 +59,11 @@ impl Display for Error {
 			Error::PackageSignatureMismatch => write!(f, "APK signature mismatch"),
 			Error::PackageDowngrade => write!(f, "Package downgrade"),
 			Error::Uninstall(e) => write!(f, "Uninstall failed: {e}"),
+			Error::WrongNumberOfArguments(actual, min, max) => write!(
+				f,
+				"Wrong number of arguments: {actual}. Expected between {min} and {max}"
+			),
+			Error::UnknownArgument(e) => write!(f, "Unknown argument: {e}"),
 		}
 	}
 }

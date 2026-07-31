@@ -1,13 +1,11 @@
 use crate::config::Config;
+use crate::console::Command;
 use crate::device::Device;
-use crate::error::Error;
 use crate::installation::DeviceInstallations;
 use crate::package::Package;
 use futures::{StreamExt, stream};
-use std::env;
 use std::path::PathBuf;
 use std::process;
-use std::process::{Command, Stdio};
 use std::sync::Arc;
 
 mod config;
@@ -17,65 +15,14 @@ mod error;
 mod installation;
 mod package;
 
-fn has_adb() -> bool {
-	command_exists("adb", "--version")
-}
-
-fn has_aapt() -> bool {
-	command_exists("aapt2", "version")
-}
-
-fn command_exists(command: &str, args: &str) -> bool {
-	Command::new(command)
-		.args([args])
-		.stdout(Stdio::null())
-		.stderr(Stdio::null())
-		.status()
-		.is_ok()
-}
-
-fn get_parameters(args: &[String]) -> Result<(String, bool), Error> {
-	if !has_adb() {
-		return Err(Error::MissingADB);
-	}
-
-	if !has_aapt() {
-		return Err(Error::MissingAAPT);
-	}
-
-	let Some(packages_folder) = args.get(1) else {
-		return Err(Error::MissingPackagesFolderArgument);
-	};
-
-	let uninstall = match args.get(2) {
-		Some(arg) => arg == "-u",
-		None => false,
-	};
-
-	Ok((packages_folder.clone(), uninstall))
-}
-
 #[tokio::main]
 async fn main() {
-	let args: Vec<String> = env::args().collect();
-	if args.contains(&String::from("-h")) {
-		println!(
-			"Usage: <batch_apk_installer> <packages_folder> [options...]\n\
-			Where:\n\
-			\t<batch_apk_installer> is the name of the binary.\n\
-			\t<packages_folder> is the name (not the path) of the folder containing the packages (APKs)\n\
-			\t                  you would like to install. This folder must be a subfolder of the one\n\
-			\t                  declared in the configuration's `directory` field. \n\
-			And the following options are available:\n\
-			\t-u\twhether the packages should be uninstalled from the devices before being \
-			installed. \n\
-		    \t-h\tdisplays the help text (this one)."
-		);
-		process::exit(0);
-	}
-
-	let (packages_folder, uninstall) = match get_parameters(&args) {
-		Ok((packages_folder, uninstall)) => (packages_folder, uninstall),
+	let (packages_folder, uninstall) = match console::get_command() {
+		Ok(Command::Install { folder, uninstall }) => (folder, uninstall),
+		Ok(Command::Help) => {
+			console::print_help();
+			process::exit(0);
+		}
 		Err(e) => {
 			console::print_error(&e.to_string());
 			process::exit(1);
