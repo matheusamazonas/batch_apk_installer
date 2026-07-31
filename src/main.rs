@@ -110,7 +110,7 @@ async fn main() {
 
 	let packages_dir = PathBuf::from(config.directory()).join(packages_folder);
 	let packages: Vec<_> = match Package::find_all(&packages_dir, config.packages()) {
-		Ok(packages) => packages.into_iter().map(Arc::new).collect(),
+		Ok(packages) => packages.map(Arc::new).collect(),
 		Err(e) => {
 			console::print_error(&e.to_string());
 			process::exit(1);
