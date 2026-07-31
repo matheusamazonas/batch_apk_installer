@@ -19,7 +19,10 @@ impl Device {
 			.iter()
 			.any(|p| match package.match_file_name() {
 				false => &self.platform == p,
-				true => package.file_name().to_lowercase().contains(&self.platform),
+				true => package
+					.file_name()
+					.to_lowercase()
+					.contains(&self.platform.to_lowercase()),
 			})
 	}
 
@@ -129,7 +132,9 @@ impl Display for Device {
 
 fn get_platform(identifier: &str, platforms: &[Platform]) -> Option<Platform> {
 	let identifier = identifier.to_lowercase();
-	let platform = platforms.iter().find(|p| identifier.contains(*p))?;
+	let platform = platforms
+		.iter()
+		.find(|&p| identifier.contains(&p.to_lowercase()))?;
 	Some(platform.clone())
 }
 
@@ -215,5 +220,45 @@ mod tests {
 		let (id, platform) = info.unwrap();
 		assert_eq!(id, String::from("ce031713396bc92803"));
 		assert_eq!(platform, "sm_g");
+	}
+
+	#[test]
+	fn uppercase_platform_matches_uppercase_device_id() {
+		let data = "ce031713396bc92803     device usb:1048576X product:dreamltexx model:SM_G950F \
+		 device:dreamlte transport_id:4";
+		let platform = String::from("SM_G");
+		let platforms = vec![platform.clone()];
+		let device_platform = get_platform(data, &platforms).unwrap();
+		assert_eq!(platform, device_platform);
+	}
+
+	#[test]
+	fn lowercase_platform_matches_uppercase_device_id() {
+		let data = "ce031713396bc92803     device usb:1048576X product:dreamltexx model:SM_G950F \
+		 device:dreamlte transport_id:4";
+		let platform = String::from("sm_g");
+		let platforms = vec![platform.clone()];
+		let device_platform = get_platform(data, &platforms).unwrap();
+		assert_eq!(platform, device_platform);
+	}
+
+	#[test]
+	fn uppercase_platform_matches_lowercase_device_id() {
+		let data = "ce031713396bc92803     device usb:1048576X product:dreamltexx model:sm_g950F \
+		 device:dreamlte transport_id:4";
+		let platform = String::from("SM_G");
+		let platforms = vec![platform.clone()];
+		let device_platform = get_platform(data, &platforms).unwrap();
+		assert_eq!(platform, device_platform);
+	}
+
+	#[test]
+	fn lowercase_platform_matches_lowercase_device_id() {
+		let data = "ce031713396bc92803     device usb:1048576X product:dreamltexx model:sm_g950F \
+		 device:dreamlte transport_id:4";
+		let platform = String::from("sm_g");
+		let platforms = vec![platform.clone()];
+		let device_platform = get_platform(data, &platforms).unwrap();
+		assert_eq!(platform, device_platform);
 	}
 }
