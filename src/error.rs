@@ -53,8 +53,8 @@ impl Error {
 				None => Error::Installation(String::from(error)),
 				Some(captures) if captures.len() < 2 => Error::Installation(String::from(error)),
 				Some(captures) => {
-					let app_sdk = String::from(captures.get(1).unwrap().as_str());
-					let device_sdk = String::from(captures.get(2).unwrap().as_str());
+					let app_sdk = captures[1].to_string();
+					let device_sdk = captures[2].to_string();
 					Error::OlderSDK(app_sdk, device_sdk)
 				}
 			}
