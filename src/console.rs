@@ -30,11 +30,11 @@ pub fn get_command() -> Result<Command, Error> {
 	let args: Vec<String> = env::args().collect();
 	let arg_count = args.len() - 1; // -1 because the first argument is the binary name.
 	if arg_count == 0 || arg_count > MIN_ARG_COUNT {
-		return Err(Error::WrongNumberOfArguments(
-			arg_count,
-			MIN_ARG_COUNT,
-			MAX_ARG_COUNT,
-		));
+		return Err(Error::WrongNumberOfArguments {
+			actual: arg_count,
+			min: MIN_ARG_COUNT,
+			max: MAX_ARG_COUNT,
+		});
 	}
 
 	if args.contains(&String::from("-h")) {

@@ -32,7 +32,11 @@ pub enum Error {
 	Uninstall(String),
 	// Argument errors.
 	MissingPackagesFolderArgument,
-	WrongNumberOfArguments(usize, usize, usize),
+	WrongNumberOfArguments {
+		actual: usize,
+		min: usize,
+		max: usize,
+	},
 	UnknownArgument(String),
 }
 
@@ -80,7 +84,7 @@ impl Display for Error {
 			Error::PackageSignatureMismatch => write!(f, "APK signature mismatch."),
 			Error::PackageDowngrade => write!(f, "Package downgrade."),
 			Error::Uninstall(e) => write!(f, "Uninstall failed: {e}."),
-			Error::WrongNumberOfArguments(actual, min, max) => write!(
+			Error::WrongNumberOfArguments { actual, min, max } => write!(
 				f,
 				"Wrong number of arguments: {actual}. Expected between {min} and {max}."
 			),
