@@ -87,12 +87,15 @@ impl Package {
 
 	pub fn find_all(dir: &PathBuf, configs: &[PackageConfig]) -> Result<Vec<Package>, Error> {
 		if let Ok(true) = fs::exists(dir) {
-			let files = find_apk_files(dir)?
-				.into_iter()
+			let files: Vec<_> = find_apk_files(dir)?
 				.filter_map(|f| PackageFile::try_from_path(&f).ok())
 				.filter_map(|f| Self::build_package(f, configs))
 				.collect();
-			Ok(files)
+			if files.is_empty() {
+				Err(Error::NoPackages)
+			} else {
+				Ok(files)
+			}
 		} else {
 			let path = dir.to_string_lossy().to_string();
 			Err(Error::NoPackageDirectory(path))
@@ -100,11 +103,10 @@ impl Package {
 	}
 }
 
-fn find_apk_files(dir: &PathBuf) -> Result<Vec<PathBuf>, Error> {
+fn find_apk_files(dir: &PathBuf) -> Result<impl Iterator<Item = PathBuf>, Error> {
 	let entries = fs::read_dir(dir)?
 		.filter_map(Result::ok)
 		.map(|e| e.path())
-		.filter(|path| path.extension().is_some_and(|ext| ext == "apk"))
-		.collect();
+		.filter(|path| path.extension().is_some_and(|ext| ext == "apk"));
 	Ok(entries)
 }
