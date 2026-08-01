@@ -86,7 +86,8 @@ impl Display for Error {
 			Error::Uninstall(e) => write!(f, "Uninstall failed: {e}."),
 			Error::WrongNumberOfArguments { actual, min, max } => write!(
 				f,
-				"Wrong number of arguments: {actual}. Expected between {min} and {max}."
+				"Wrong number of arguments: {actual}. Expected between {min} and {max}. \
+				Use -h to display the help text."
 			),
 			Error::UnknownArgument(e) => write!(f, "Unknown argument: {e}."),
 			Error::NoDevices => write!(f, "No devices were found."),
