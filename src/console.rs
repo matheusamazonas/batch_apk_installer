@@ -2,8 +2,8 @@ use crate::error::Error;
 use std::process::Stdio;
 use std::{env, process};
 
-const MIN_ARG_COUNT: usize = 2;
-const MAX_ARG_COUNT: usize = 3;
+const MIN_ARG_COUNT: usize = 1;
+const MAX_ARG_COUNT: usize = 2;
 
 pub enum Command {
 	Help,
@@ -29,7 +29,8 @@ pub fn get_command() -> Result<Command, Error> {
 
 	let args: Vec<String> = env::args().collect();
 	let arg_count = args.len() - 1; // -1 because the first argument is the binary name.
-	if arg_count == 0 || arg_count > MIN_ARG_COUNT {
+	let count_within_range = (MIN_ARG_COUNT..=MAX_ARG_COUNT).contains(&arg_count);
+	if !count_within_range {
 		return Err(Error::WrongNumberOfArguments {
 			actual: arg_count,
 			min: MIN_ARG_COUNT,
