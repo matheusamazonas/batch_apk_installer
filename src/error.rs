@@ -1,4 +1,4 @@
-use regex::Error as RegexError;
+use regex::{Error as RegexError, Regex};
 use std::fmt::Display;
 use std::{io, string};
 use string::FromUtf8Error;
@@ -6,26 +6,34 @@ use string::FromUtf8Error;
 #[derive(Debug, PartialEq, Clone)]
 pub enum Error {
 	IO(String),
+	NoHomeDirectory,
+	Parsing(String),
+	// Tools errors.
 	MissingADB,
 	MissingAAPT,
-	MissingPackagesFolderArgument,
-	NoHomeDirectory,
+	// Package errors.
+	NoPackages,
 	NoPackageDirectory(String),
-	Parsing(String),
-	NoDeviceName,
-	DevicesFetching,
 	MalformedPackageFilePath,
 	PackageNameNotFound,
+	// Device errors.
+	NoDevices,
+	NoDeviceName,
+	DevicesFetching,
+	// Config errors.
 	ConfigNotFound,
 	InvalidConfigPath,
+	// Installation errors.
 	Installation(String),
 	PackageSignatureMismatch,
 	PackageDowngrade,
+	OlderSDK(String, String),
+	// Uninstallation errors.
 	Uninstall(String),
+	// Argument errors.
+	MissingPackagesFolderArgument,
 	WrongNumberOfArguments(usize, usize, usize),
 	UnknownArgument(String),
-	NoDevices,
-	NoPackages,
 }
 
 impl Error {
@@ -35,6 +43,17 @@ impl Error {
 			Error::PackageSignatureMismatch
 		} else if error.contains("INSTALL_FAILED_VERSION_DOWNGRADE") {
 			Error::PackageDowngrade
+		} else if error.contains("INSTALL_FAILED_OLDER_SDK") {
+			let regex = Regex::new(r"newer sdk version #(\d+).*current version is #(\d+)").unwrap();
+			match regex.captures(&error) {
+				None => Error::Installation(String::from(error)),
+				Some(captures) if captures.len() < 2 => Error::Installation(String::from(error)),
+				Some(captures) => {
+					let app_sdk = String::from(captures.get(1).unwrap().as_str());
+					let device_sdk = String::from(captures.get(2).unwrap().as_str());
+					Error::OlderSDK(app_sdk, device_sdk)
+				}
+			}
 		} else {
 			Error::Installation(String::from(error))
 		}
@@ -44,30 +63,34 @@ impl Error {
 impl Display for Error {
 	fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
 		match self {
-			Error::IO(e) => write!(f, "IO Error: {e}"),
+			Error::IO(e) => write!(f, "IO Error: {e}."),
 			Error::MissingADB => write!(f, "ADB is missing."),
 			Error::MissingAAPT => write!(f, "AAPT is missing."),
 			Error::MissingPackagesFolderArgument => write!(f, "Missing argument: packages folder."),
-			Error::NoHomeDirectory => write!(f, "No home directory found"),
-			Error::NoPackageDirectory(e) => write!(f, "Missing package directory: {e}"),
-			Error::Parsing(e) => write!(f, "Parsing Error: {e}"),
-			Error::NoDeviceName => write!(f, "No device name provided"),
-			Error::DevicesFetching => write!(f, "Failed to fetch devices"),
-			Error::MalformedPackageFilePath => write!(f, "Package file path is not valid"),
-			Error::PackageNameNotFound => write!(f, "Failed to fetch package name"),
-			Error::ConfigNotFound => write!(f, "Config file not found"),
-			Error::InvalidConfigPath => write!(f, "Invalid config path"),
-			Error::Installation(e) => write!(f, "Installation error: {e}"),
-			Error::PackageSignatureMismatch => write!(f, "APK signature mismatch"),
-			Error::PackageDowngrade => write!(f, "Package downgrade"),
-			Error::Uninstall(e) => write!(f, "Uninstall failed: {e}"),
+			Error::NoHomeDirectory => write!(f, "No home directory found."),
+			Error::NoPackageDirectory(e) => write!(f, "Missing package directory: {e}."),
+			Error::Parsing(e) => write!(f, "Parsing Error: {e}."),
+			Error::NoDeviceName => write!(f, "No device name provided."),
+			Error::DevicesFetching => write!(f, "Failed to fetch devices."),
+			Error::MalformedPackageFilePath => write!(f, "Package file path is not valid."),
+			Error::PackageNameNotFound => write!(f, "Failed to fetch package name."),
+			Error::ConfigNotFound => write!(f, "Config file not found."),
+			Error::InvalidConfigPath => write!(f, "Invalid config path."),
+			Error::Installation(e) => write!(f, "Installation error: {e}."),
+			Error::PackageSignatureMismatch => write!(f, "APK signature mismatch."),
+			Error::PackageDowngrade => write!(f, "Package downgrade."),
+			Error::Uninstall(e) => write!(f, "Uninstall failed: {e}."),
 			Error::WrongNumberOfArguments(actual, min, max) => write!(
 				f,
-				"Wrong number of arguments: {actual}. Expected between {min} and {max}"
+				"Wrong number of arguments: {actual}. Expected between {min} and {max}."
 			),
-			Error::UnknownArgument(e) => write!(f, "Unknown argument: {e}"),
-			Error::NoDevices => write!(f, "No devices were found"),
-			Error::NoPackages => write!(f, "No packages were found"),
+			Error::UnknownArgument(e) => write!(f, "Unknown argument: {e}."),
+			Error::NoDevices => write!(f, "No devices were found."),
+			Error::NoPackages => write!(f, "No packages were found."),
+			Error::OlderSDK(app_sdk, device_sdk) => write!(
+				f,
+				"APK's minimum API level ({app_sdk}) is higher than the device's (API level {device_sdk})."
+			),
 		}
 	}
 }

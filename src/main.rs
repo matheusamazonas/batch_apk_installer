@@ -32,7 +32,7 @@ async fn main() {
 	let config = match Config::build() {
 		Ok(config) => config,
 		Err(e) => {
-			let message = format!("Error when loading config: {e}.");
+			let message = format!("Error when loading config: {e}");
 			console::print_error(&message);
 			process::exit(1)
 		}
@@ -41,7 +41,7 @@ async fn main() {
 	let devices: Vec<_> = match Device::get_devices(config.platforms()) {
 		Ok(devices) => devices.into_iter().map(Arc::new).collect(),
 		Err(e) => {
-			let message = format!("Error when fetching devices: {e}.");
+			let message = format!("Error when fetching devices: {e}");
 			console::print_error(&message);
 			process::exit(1)
 		}
@@ -75,7 +75,7 @@ async fn main() {
 				let description = outcome.description();
 				match outcome.error() {
 					Some(e) => {
-						let error = format!("{description} failed: {e}.");
+						let error = format!("{description} failed: {e}");
 						console::print_error(&error);
 					}
 					None => println!("\x1b[92m{description} completed successfully.\x1b[0m"),
