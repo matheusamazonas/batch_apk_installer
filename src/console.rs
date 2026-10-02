@@ -8,6 +8,7 @@ const MAX_ARG_COUNT: usize = 2;
 pub enum Command {
 	Help,
 	Install { folder: String, uninstall: bool },
+	Version,
 }
 
 pub fn print_error(error: &str) {
@@ -40,6 +41,10 @@ pub fn get_command() -> Result<Command, Error> {
 
 	if args.contains(&String::from("-h")) {
 		return Ok(Command::Help);
+	}
+	
+	if args.contains(&String::from("-v")) {
+		return Ok(Command::Version);
 	}
 
 	let Some(packages_folder) = args.get(1) else {
@@ -74,6 +79,11 @@ pub fn print_help() {
 			installed. \n\
 		    \t-h\tdisplays the help text (this one)."
 	);
+}
+
+pub fn print_version() {
+	let version = env!("CARGO_PKG_VERSION");
+	print!("Batch APK Installer version {}.", version);
 }
 
 fn has_adb() -> bool {
