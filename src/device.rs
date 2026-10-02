@@ -14,16 +14,16 @@ pub struct Device {
 
 impl Device {
 	pub fn supports(&self, package: &Package) -> bool {
-		package
-			.platforms()
-			.iter()
-			.any(|p| match package.match_file_name() {
-				false => &self.platform == p,
-				true => package
+		let platform_matches = package.platforms().iter().any(|p| &self.platform == p);
+		if package.match_file_name() {
+			platform_matches
+				&& package
 					.file_name()
 					.to_lowercase()
-					.contains(&self.platform.to_lowercase()),
-			})
+					.contains(&self.platform.to_lowercase())
+		} else {
+			platform_matches
+		}
 	}
 
 	pub async fn install(&self, package: &Package) -> CommandOutcome {
@@ -78,7 +78,7 @@ impl Device {
 		}
 	}
 
-	fn from_str_with_platforms(line: &str, platforms: &[Platform]) -> Option<Device> {
+	fn from_str_with_platforms(line: &str, platforms: &[Platform]) -> Option<Self> {
 		let (id, platform) = Self::parse_info(line, platforms)?;
 		let name = Self::parse_name(&id).ok()?;
 		let device = Self { name, id, platform };
@@ -102,11 +102,12 @@ impl Device {
 		let id = String::from(caps.get(1)?.as_str());
 		let model = caps.get(2)?.as_str();
 		let device_name = caps.get(3)?.as_str();
-		let platform = get_platform(model, platforms).or(get_platform(device_name, platforms))?;
+		let identifiers = [model, device_name];
+		let platform = get_platform(&identifiers, platforms)?;
 		Some((id, platform))
 	}
 
-	pub fn get_devices(platforms: &[Platform]) -> Result<Vec<Device>, Error> {
+	pub fn get_devices(platforms: &[Platform]) -> Result<Vec<Self>, Error> {
 		let output = Command::new("adb").args(["devices", "-l"]).output()?;
 		let output = String::from_utf8(output.stdout)?;
 		let header_line_ix = output
@@ -135,11 +136,14 @@ impl Display for Device {
 	}
 }
 
-fn get_platform(identifier: &str, platforms: &[Platform]) -> Option<Platform> {
-	let identifier = identifier.to_lowercase();
+fn get_platform(identifiers: &[&str], platforms: &[Platform]) -> Option<Platform> {
+	let identifiers = identifiers
+		.iter()
+		.map(|i| i.to_lowercase())
+		.collect::<Vec<_>>();
 	let platform = platforms
 		.iter()
-		.find(|&p| identifier.contains(&p.to_lowercase()))?;
+		.find(|&p| identifiers.iter().any(|i| i.contains(&p.to_lowercase())))?;
 	Some(platform.clone())
 }
 
@@ -157,26 +161,27 @@ mod tests {
 	fn test_get_platform_pico() {
 		let pico = Some(String::from("pico"));
 		let platforms = get_platforms();
-		assert_eq!(get_platform("Pico_Neo_3", &platforms), pico);
-		assert_eq!(get_platform("PICOA7H10", &platforms), pico);
-		assert_eq!(get_platform("PICOA8110", &platforms), pico);
+		assert_eq!(get_platform(&["Pico_Neo_3"], &platforms), pico);
+		assert_eq!(get_platform(&["PICOA7H10"], &platforms), pico);
+		assert_eq!(get_platform(&["PICOA8110"], &platforms), pico);
 	}
 
 	#[test]
 	fn test_get_platform_quest() {
 		let pico = Some(String::from("quest"));
 		let platforms = get_platforms();
-		assert_eq!(get_platform("Quest_2", &platforms), pico);
-		assert_eq!(get_platform("Quest_3", &platforms), pico);
-		assert_eq!(get_platform("Quest_3S", &platforms), pico);
-		assert_eq!(get_platform("Quest_3_2", &platforms), pico);
+		assert_eq!(get_platform(&["Quest_2"], &platforms), pico);
+		assert_eq!(get_platform(&["Quest_3"], &platforms), pico);
+		assert_eq!(get_platform(&["Quest_3S"], &platforms), pico);
+		assert_eq!(get_platform(&["Quest_3_2"], &platforms), pico);
 	}
 
 	#[test]
 	fn test_get_platform_galaxy() {
 		let pico = Some(String::from("sm_g"));
 		let platforms = get_platforms();
-		assert_eq!(get_platform("SM_G950F", &platforms), pico);
+		let identifiers = ["SM_G950F"];
+		assert_eq!(get_platform(&identifiers, &platforms), pico);
 	}
 
 	#[test]
@@ -229,41 +234,33 @@ mod tests {
 
 	#[test]
 	fn uppercase_platform_matches_uppercase_device_id() {
-		let data = "ce031713396bc92803     device usb:1048576X product:dreamltexx model:SM_G950F \
-		 device:dreamlte transport_id:4";
 		let platform = String::from("SM_G");
 		let platforms = vec![platform.clone()];
-		let device_platform = get_platform(data, &platforms).unwrap();
+		let device_platform = get_platform(&["SM_G950F"], &platforms).unwrap();
 		assert_eq!(platform, device_platform);
 	}
 
 	#[test]
 	fn lowercase_platform_matches_uppercase_device_id() {
-		let data = "ce031713396bc92803     device usb:1048576X product:dreamltexx model:SM_G950F \
-		 device:dreamlte transport_id:4";
 		let platform = String::from("sm_g");
 		let platforms = vec![platform.clone()];
-		let device_platform = get_platform(data, &platforms).unwrap();
+		let device_platform = get_platform(&["SM_G950F"], &platforms).unwrap();
 		assert_eq!(platform, device_platform);
 	}
 
 	#[test]
 	fn uppercase_platform_matches_lowercase_device_id() {
-		let data = "ce031713396bc92803     device usb:1048576X product:dreamltexx model:sm_g950F \
-		 device:dreamlte transport_id:4";
 		let platform = String::from("SM_G");
 		let platforms = vec![platform.clone()];
-		let device_platform = get_platform(data, &platforms).unwrap();
+		let device_platform = get_platform(&["sm_g950F"], &platforms).unwrap();
 		assert_eq!(platform, device_platform);
 	}
 
 	#[test]
 	fn lowercase_platform_matches_lowercase_device_id() {
-		let data = "ce031713396bc92803     device usb:1048576X product:dreamltexx model:sm_g950F \
-		 device:dreamlte transport_id:4";
 		let platform = String::from("sm_g");
 		let platforms = vec![platform.clone()];
-		let device_platform = get_platform(data, &platforms).unwrap();
+		let device_platform = get_platform(&["sm_g950F"], &platforms).unwrap();
 		assert_eq!(platform, device_platform);
 	}
 }

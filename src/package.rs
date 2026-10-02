@@ -11,7 +11,7 @@ pub struct PackageFile {
 }
 
 impl PackageFile {
-	fn try_from_path(path: &PathBuf) -> Result<PackageFile, Error> {
+	fn try_from_path(path: &PathBuf) -> Result<Self, Error> {
 		let path_str = path.to_str().ok_or(Error::MalformedPackageFilePath)?;
 		let output = Command::new("aapt2")
 			.args(["dump", "packagename", path_str])
@@ -20,7 +20,7 @@ impl PackageFile {
 			let output = String::from_utf8(output.stdout)?;
 			let id = String::from(output.trim_end());
 			let path = PathBuf::from(path);
-			let package = PackageFile { path, id };
+			let package = Self { path, id };
 			Ok(package)
 		} else {
 			Err(Error::PackageNameNotFound)
@@ -46,10 +46,10 @@ pub struct Package {
 impl Package {
 	pub fn try_new(
 		file: PackageFile, platforms: Vec<Platform>, match_file_name: bool,
-	) -> Option<Package> {
+	) -> Option<Self> {
 		let file_name = file.path.file_name()?.to_str()?.to_string();
 		let path = file.path.into_os_string().into_string().ok()?;
-		let package = Package {
+		let package = Self {
 			id: file.id,
 			path,
 			file_name,
@@ -85,7 +85,7 @@ impl Package {
 		Some(package)
 	}
 
-	pub fn find_all(dir: &PathBuf, configs: &[PackageConfig]) -> Result<Vec<Package>, Error> {
+	pub fn find_all(dir: &PathBuf, configs: &[PackageConfig]) -> Result<Vec<Self>, Error> {
 		if let Ok(true) = fs::exists(dir) {
 			let files: Vec<_> = find_apk_files(dir)?
 				.filter_map(|f| PackageFile::try_from_path(&f).ok())

@@ -25,7 +25,8 @@ Where:
 
 And the following options are available:
 - `-u`: whether the packages should be uninstalled from the devices before being installed.
-- `-h`: displays the help text.
+- `--help`: displays the help text.
+- `--version`: displays the tool's version.
 
 For example:
 

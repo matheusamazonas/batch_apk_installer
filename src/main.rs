@@ -23,6 +23,10 @@ async fn main() {
 			console::print_help();
 			process::exit(0);
 		}
+		Ok(Command::Version) => {
+			console::print_version();
+			process::exit(0);
+		}
 		Err(e) => {
 			console::print_error(&e.to_string());
 			process::exit(1);

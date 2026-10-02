@@ -20,15 +20,15 @@ impl CommandOutcome {
 		self.error.as_ref()
 	}
 
-	pub fn from_success(description: &str) -> CommandOutcome {
-		CommandOutcome {
+	pub fn from_success(description: &str) -> Self {
+		Self {
 			description: String::from(description),
 			error: None,
 		}
 	}
 
-	pub fn from_error(description: &str, error: Error) -> CommandOutcome {
-		CommandOutcome {
+	pub fn from_error(description: &str, error: Error) -> Self {
+		Self {
 			description: String::from(description),
 			error: Some(error),
 		}
@@ -45,8 +45,8 @@ pub struct DeviceInstallations {
 impl DeviceInstallations {
 	pub fn build_requests(
 		devices: &[Arc<Device>], packages: &[Arc<Package>], uninstall_first: bool,
-	) -> Vec<DeviceInstallations> {
-		let mut requests: Vec<DeviceInstallations> = Vec::new();
+	) -> Vec<Self> {
+		let mut requests: Vec<Self> = Vec::new();
 		for device in devices {
 			let mut matches: Vec<&Arc<Package>> = vec![];
 			let mut warnings: Vec<String> = vec![];
@@ -73,7 +73,7 @@ impl DeviceInstallations {
 				let package = package.clone();
 				packages.push(package);
 			}
-			let installations = DeviceInstallations {
+			let installations = Self {
 				device: device.clone(),
 				packages,
 				warnings,

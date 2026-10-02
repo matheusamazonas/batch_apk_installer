@@ -35,7 +35,7 @@ pub struct Config {
 }
 
 impl Config {
-	pub fn build() -> Result<Config, Error> {
+	pub fn build() -> Result<Self, Error> {
 		let config_folder_path = dirs::config_dir().ok_or(Error::NoHomeDirectory)?;
 		let app_folder_path = config_folder_path.join(CONFIG_PATH);
 		let file_path = app_folder_path.join(CONFIG_FILE);
